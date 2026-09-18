@@ -27,8 +27,15 @@ Per-stream decode at concurrency 1 / 2 / 3 (effort low, distinct prompts started
 |---|---|---|---|
 | official FP8, adaptive 3/7 | 29.5 / 23.1 / 18.7 | 60.9 / 37.6 / 31.2 | 65.5 / 48.0 / 37.8 |
 | **NVFP4, adaptive 3/7** | **37.0 / 29.5 / 25.6** | **77.6 / 58.6 / 49.6** | **91.1 / 70.2 / 57.1** |
+| NVFP4 on SGLang TP4 + RoCEnante all-reduce | 36.5 / 29.0 / 24.7 | 83.1 / 64.4 / 54.5 | 98.0 / 71.8 / 62.6 |
+| Mia 1.6.0 EXL3 4bpw on **two** Sparks (TP2, adaptive-k, same prompts) | 22.4 / 17.6 / 15.6 | 38.8 / 26.9 / 24.2 | 51.1 / 33.3 / 26.8 |
 
 Aggregate at c=3: prose 77, code 149, JSON 171 tok/s.
+
+The two-Spark EXL3 row is [MiaAI-Lab/GLM-5.3-Flash-EXL3-2x-DGX-Sparks](https://github.com/MiaAI-Lab/GLM-5.3-Flash-EXL3-2x-DGX-Sparks)
+at `ca85576` (2026-09-18) with `GLM53_ADAPTIVE_K=ema`, `GLM53_DENSE_FP8=dense,kda`, `GLM53_COOP_GEOMETRY=1`, stock
+loader, measured with this harness on the same two nodes; her README's prose number uses a different prompt.
+Her quality gate is 74/75, the same as the official FP8 (EXL3 4bpw has KLD 0.025 vs NVFP4 0.061).
 
 Quality gate (`bench/qeval.py`, 75 auto-scored checks: code executed against hidden asserts, JSON
 schema, numeric answers, format constraints, prose degeneration; greedy, c=1): NVFP4 adaptive 72/75 on
