@@ -13,22 +13,22 @@ repeat spread between two boots of the same config was 1–3 %.
 
 Decode, one stream, `reasoning_effort` high / low:
 
-| Config | code | prose | JSON | agent turn (6k system prompt + tools) |
+| Config | code | prose | JSON | agent turn (6k sys + tools) |
 |---|---|---|---|---|
-| official FP8, Triton MoE, adaptive draft 3/7 (previous serving config) | 53 / 59 | 27 / 32 | 54 / 68 | 37 / 83 |
-| NVFP4, Marlin, static draft 7 | 76 / 83 | 33 / 33 | 86 / 97 | 58 / 103 |
-| NVFP4 (RedHatAI), Marlin, adaptive 3/7 | 78 / 83 | 38 / 37 | 85 / 89 | 47 / 106 |
-| NVFP4 on SGLang TP4 (DFLASH k=7, bf16 KV, `docs/sglang/`) | 83 / 75 | 36 / 35 | 90 / 91 | 46 / 109 |
-| **NVFP4, Marlin, adaptive draft 3/7 (this repo)** | **76 / 80** | **37 / 36** | **88 / 90** | **54 / 102** |
+| official FP8, Triton, adaptive 3/7 (previous) | 53&nbsp;/&nbsp;59 | 27&nbsp;/&nbsp;32 | 54&nbsp;/&nbsp;68 | 37&nbsp;/&nbsp;83 |
+| NVFP4, Marlin, static draft 7 | 76&nbsp;/&nbsp;83 | 33&nbsp;/&nbsp;33 | 86&nbsp;/&nbsp;97 | 58&nbsp;/&nbsp;103 |
+| NVFP4 (RedHatAI), Marlin, adaptive 3/7 | 78&nbsp;/&nbsp;83 | 38&nbsp;/&nbsp;37 | 85&nbsp;/&nbsp;89 | 47&nbsp;/&nbsp;106 |
+| NVFP4, SGLang TP4, k=7 (`docs/sglang/`) | 83&nbsp;/&nbsp;75 | 36&nbsp;/&nbsp;35 | 90&nbsp;/&nbsp;91 | 46&nbsp;/&nbsp;109 |
+| **NVFP4, Marlin, adaptive draft 3/7 (this repo)** | **76&nbsp;/&nbsp;80** | **37&nbsp;/&nbsp;36** | **88&nbsp;/&nbsp;90** | **54&nbsp;/&nbsp;102** |
 
 Per-stream decode at concurrency 1 / 2 / 3 (effort low, distinct prompts started together):
 
 | Config | prose | code | JSON |
 |---|---|---|---|
-| official FP8, adaptive 3/7 | 29.5 / 23.1 / 18.7 | 60.9 / 37.6 / 31.2 | 65.5 / 48.0 / 37.8 |
-| **NVFP4, adaptive 3/7** | **37.0 / 29.5 / 25.6** | **77.6 / 58.6 / 49.6** | **91.1 / 70.2 / 57.1** |
-| NVFP4 on SGLang TP4 + RoCEnante all-reduce | 36.5 / 29.0 / 24.7 | 83.1 / 64.4 / 54.5 | 98.0 / 71.8 / 62.6 |
-| Mia 1.6.0 EXL3 4bpw on **two** Sparks (TP2, adaptive-k, same prompts) | 22.4 / 17.6 / 15.6 | 38.8 / 26.9 / 24.2 | 51.1 / 33.3 / 26.8 |
+| official FP8, adaptive 3/7 | 29.5&nbsp;/&nbsp;23.1&nbsp;/&nbsp;18.7 | 60.9&nbsp;/&nbsp;37.6&nbsp;/&nbsp;31.2 | 65.5&nbsp;/&nbsp;48.0&nbsp;/&nbsp;37.8 |
+| **NVFP4, adaptive 3/7** | **37.0&nbsp;/&nbsp;29.5&nbsp;/&nbsp;25.6** | **77.6&nbsp;/&nbsp;58.6&nbsp;/&nbsp;49.6** | **91.1&nbsp;/&nbsp;70.2&nbsp;/&nbsp;57.1** |
+| NVFP4, SGLang TP4 + RoCEnante | 36.5&nbsp;/&nbsp;29.0&nbsp;/&nbsp;24.7 | 83.1&nbsp;/&nbsp;64.4&nbsp;/&nbsp;54.5 | 98.0&nbsp;/&nbsp;71.8&nbsp;/&nbsp;62.6 |
+| Mia 1.6.0 EXL3 4bpw, **two** Sparks, same prompts | 22.4&nbsp;/&nbsp;17.6&nbsp;/&nbsp;15.6 | 38.8&nbsp;/&nbsp;26.9&nbsp;/&nbsp;24.2 | 51.1&nbsp;/&nbsp;33.3&nbsp;/&nbsp;26.8 |
 
 Aggregate at c=3: prose 77, code 149, JSON 171 tok/s.
 
@@ -114,7 +114,7 @@ against static k=7: prose +12 %, code and JSON unchanged.
 | Variable | Default | Notes |
 |---|---|---|
 | `MODEL_DIR` / `MOE_BACKEND` | NVFP4 / `marlin` | official FP8 checkpoint: `triton` (needs the GB10 MoE JSON, mounted by the launcher) |
-| `K_HI` / `K_LO` | 7 / 3 | adaptive draft bounds; static k: set both equal |
+| `K_HI` / `K_LO` | 7&nbsp;/&nbsp;3 | adaptive draft bounds; static k: set both equal |
 | `KV_BYTES` | 12 GiB | FP8 KV per rank; 262k context at 4 sequences |
 | `MAX_SEQS` | 4 | CUDA graphs are captured for the batch sizes this implies |
 | `CAPTURE_SIZES` | `[1,2,4,6,8,12,16,18,24,32]` | keep: the DFlash families need the token-count sizes |
