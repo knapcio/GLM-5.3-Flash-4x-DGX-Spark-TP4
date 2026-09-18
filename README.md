@@ -138,8 +138,14 @@ against static k=7: prose +12 %, code and JSON unchanged.
   not enabled here.
 - First batch-2 request after boot pays ~6 s of TTFT once (kernel JIT).
 - Boot is ~14 min; ~6.5 min of it is 74k per-expert `copy_` calls from mmap-backed tensors at ~0.4 GB/s
-  (profiled: iterator 7 s, copies 376 s, Marlin repack 8 s). Page-cache prewarm does not help; the same
-  checkpoint loads in 8.5 min under SGLang. A pinned-buffer loader for vLLM is the open item.
+  (profiled: iterator 7 s, copies 376 s, Marlin repack 8 s). A byte-bounded page-cache prewarm without the
+  boot-time cache flusher (`PREWARM=1`, `scripts/prewarm.py 4 8 6`) brings the shard loop from 7:48 to 6:32
+  and the whole boot to 13.6 min; the per-slice copy stays ~3 s per shard even with warm pages, so the cost
+  is inside the loader, not the disk. The same checkpoint loads in 8.5 min under SGLang. Do not run the
+  prewarm on the 11-shard RedHatAI layout with more than one shard of lookahead (18.6 GB each).
+- The Apache-licensed drafter `canada-quant/GLM-5.3-Flash-DFlash2-E` (8 layers) does not load on this image:
+  vLLM cannot unify its KV page size with the target's indexer cache (`page size is not divisible by the
+  maximum page size`); it needs canada-quant's own vLLM build. Open item, and the only lever left for prose.
 - SGLang TP4 (`docs/sglang/`): works on the DSV4.1 image with the GB10 TileLang tile patch (block_I 32, 1
   stage, 128 threads); no adaptive draft for DFLASH there, speed equal to vLLM at the same k, quality gate
   68/75. Not the production path.
