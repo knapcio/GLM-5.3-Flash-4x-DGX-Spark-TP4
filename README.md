@@ -29,6 +29,7 @@ Per-stream decode at concurrency 1 / 2 / 3 (effort low, distinct prompts started
 | **NVFP4, adaptive 3/7** | **37.0&nbsp;/&nbsp;29.5&nbsp;/&nbsp;25.6** | **77.6&nbsp;/&nbsp;58.6&nbsp;/&nbsp;49.6** | **91.1&nbsp;/&nbsp;70.2&nbsp;/&nbsp;57.1** |
 | NVFP4, SGLang TP4 + RoCEnante | 36.5&nbsp;/&nbsp;29.0&nbsp;/&nbsp;24.7 | 83.1&nbsp;/&nbsp;64.4&nbsp;/&nbsp;54.5 | 98.0&nbsp;/&nbsp;71.8&nbsp;/&nbsp;62.6 |
 | Mia 1.6.0 EXL3 4bpw, **two** Sparks, same prompts | 22.4&nbsp;/&nbsp;17.6&nbsp;/&nbsp;15.6 | 38.8&nbsp;/&nbsp;26.9&nbsp;/&nbsp;24.2 | 51.1&nbsp;/&nbsp;33.3&nbsp;/&nbsp;26.8 |
+| Mia 1.6.0 EXL3 **6bpw** (malaiwah K6), four Sparks TP4, adaptive-k, dense FP8 | 22.2&nbsp;/&nbsp;15.9&nbsp;/&nbsp;12.2 | 55.3&nbsp;/&nbsp;46.1&nbsp;/&nbsp;30.2 | 67.6&nbsp;/&nbsp;42.0&nbsp;/&nbsp;26.7 |
 
 Aggregate at c=3: prose 77, code 149, JSON 171 tok/s.
 
@@ -45,6 +46,15 @@ FP8-vs-NVFP4 differences are one math and one reasoning task; at 55 primary task
 prose, tools, JSON) gave identical verifiable answers on every item, with FP8 once running into the 4096-token
 reasoning cap. The gate catches degeneration, not subtle reasoning
 loss; see *Fidelity* below.
+
+EXL3 6bpw on four Sparks (quality gate 74/75, KLD 0.014, the closest-to-BF16 quant that fits) is 40 % slower
+on prose than NVFP4 on vLLM and falls off faster with concurrency, so "closer to BF16 at the same speed" is not
+available on this hardware; the fat E3 kernels are 4-bit only (`EXL3_FAT_KERNEL=0` for K6). On Mia's own
+hash-map prose prompt with thinking on, K6 TP4 reads 28.7 / 21.4 / 17.0.
+
+Marlin NVFP4 MoE tile sweep (12 tile overrides vLLM exposes, M = 1..32 tokens, 3 routings, numerics
+bit-close to stock): best candidate `gate_up 128x128 1-stage` +2.0 % on the MoE call, i.e. about 1 % of a
+decode step; `down_*` overrides are neutral to −15 %. No thin-decode win is available without a new kernel.
 
 What did not help (all measured, all rejected): `cudagraph_mode FULL_AND_PIECEWISE` (equal to
 `FULL_DECODE_ONLY`), trimming the CUDA-graph capture list to `[1,2,4]` (−7 to −12 % at some
