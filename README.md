@@ -17,6 +17,8 @@ Decode, one stream, `reasoning_effort` high / low:
 |---|---|---|---|---|
 | official FP8, Triton MoE, adaptive draft 3/7 (previous serving config) | 53 / 59 | 27 / 32 | 54 / 68 | 37 / 83 |
 | NVFP4, Marlin, static draft 7 | 76 / 83 | 33 / 33 | 86 / 97 | 58 / 103 |
+| NVFP4 (RedHatAI), Marlin, adaptive 3/7 | 78 / 83 | 38 / 37 | 85 / 89 | 47 / 106 |
+| NVFP4 on SGLang TP4 (DFLASH k=7, bf16 KV, `docs/sglang/`) | 83 / 75 | 36 / 35 | 90 / 91 | 46 / 109 |
 | **NVFP4, Marlin, adaptive draft 3/7 (this repo)** | **76 / 80** | **37 / 36** | **88 / 90** | **54 / 102** |
 
 Per-stream decode at concurrency 1 / 2 / 3 (effort low, distinct prompts started together):
@@ -30,7 +32,11 @@ Aggregate at c=3: prose 77, code 149, JSON 171 tok/s.
 
 Quality gate (`bench/qeval.py`, 75 auto-scored checks: code executed against hidden asserts, JSON
 schema, numeric answers, format constraints, prose degeneration; greedy, c=1): NVFP4 adaptive 72/75 on
-two boots, NVFP4 static 72/75, FP8 (pending). The gate catches degeneration, not subtle reasoning
+three boots (LibertAI x2, RedHatAI), NVFP4 static 72/75, official FP8 74/75, SGLang NVFP4 68/75. The two
+FP8-vs-NVFP4 differences are one math and one reasoning task; at 55 primary tasks that is p=0.06, and a
+30-prompt harder set (`bench/hardset.py`: repo bug fixes, multi-step math, logic, facts, Polish and English
+prose, tools, JSON) gave identical verifiable answers on every item, with FP8 once running into the 4096-token
+reasoning cap. The gate catches degeneration, not subtle reasoning
 loss; see *Fidelity* below.
 
 What did not help (all measured, all rejected): `cudagraph_mode FULL_AND_PIECEWISE` (equal to
@@ -114,7 +120,12 @@ against static k=7: prose +12 %, code and JSON unchanged.
   the step budget). `--long-prefill-token-threshold` trades newcomer TTFT for decoder responsiveness;
   not enabled here.
 - First batch-2 request after boot pays ~6 s of TTFT once (kernel JIT).
-- Boot is ~14 min; ~8 min of it is the CPU-side weight processing of 120 shards.
+- Boot is ~14 min; ~6.5 min of it is 74k per-expert `copy_` calls from mmap-backed tensors at ~0.4 GB/s
+  (profiled: iterator 7 s, copies 376 s, Marlin repack 8 s). Page-cache prewarm does not help; the same
+  checkpoint loads in 8.5 min under SGLang. A pinned-buffer loader for vLLM is the open item.
+- SGLang TP4 (`docs/sglang/`): works on the DSV4.1 image with the GB10 TileLang tile patch (block_I 32, 1
+  stage, 128 threads); no adaptive draft for DFLASH there, speed equal to vLLM at the same k, quality gate
+  68/75. Not the production path.
 - The DFlash2 drafter is CC BY-NC-ND 4.0.
 
 See [CREDITS.md](CREDITS.md): the image, the launch line, the adaptive verification scheduler and the
