@@ -61,6 +61,29 @@ What did not help (all measured, all rejected): `cudagraph_mode FULL_AND_PIECEWI
 concurrencies: the DFlash families are token-count indexed), a host-side shard prewarm during weight
 loading (the loader is CPU-bound at 3.9 s per shard, not disk-bound).
 
+## Time to task, not tokens per second
+
+Tokens per second is not what a user waits for; thinking length is. The same 30 harder prompts
+(`bench/hardset.py`: repo bug fixes, multi-step math, logic, facts, Polish and English prose, tools,
+JSON), greedy, one at a time, on this fleet (GLM NVFP4 adaptive at 37 tok/s prose, DeepSeek-V4.1-Flash
+production at 61 tok/s):
+
+| Model, thinking mode | wall time | answer tokens | thinking tokens | hit the 4096 cap | verifiable answers |
+|---|---|---|---|---|---|
+| GLM-5.3-Flash NVFP4, `reasoning_effort: high` | **324 s** | 15.6k | 4.9k | 0 | all correct |
+| DeepSeek-V4.1-Flash, `thinking: true` (its only mode) | 671 s | 49.1k | 39.1k | 6 | all correct |
+| GLM-5.3-Flash NVFP4, `reasoning_effort: max` | 1030 s | 55.8k | 42.3k | 7 | not judged |
+
+At `high` GLM finishes the same tasks 2.1x sooner than DeepSeek (code 2.3x, reasoning 2.7x, facts 1.5x,
+Polish prose 1.7x) with the same verifiable answers, because it thinks eight times less; at `max` it
+thinks as much as DeepSeek and its slower decode shows. `bench/compare_time.py` produces this table and a
+blind A/B review file.
+
+Agentic work is different: `bench/tasktime/` (six seeded repos, OpenCode non-interactive, time to green
+tests) gave DeepSeek 172 s for 6/6 and GLM 243-245 s for 6/6 and 5/6 on two runs (one wrong date fix,
+reported as passing because the agent ran the test file as a script). In tool loops both models think
+little, so per-token speed decides, and there DeepSeek's 61 tok/s wins.
+
 ## Fidelity: FP8 vs NVFP4
 
 NVFP4 is measurably further from BF16 than FP8 (KL divergence on malaiwah's panel: FP8 0.021, NVFP4
