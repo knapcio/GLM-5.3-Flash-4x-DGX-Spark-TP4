@@ -38,6 +38,7 @@ run_rank() {
     -v $OVERLAY_REMOTE/overlay/sparse_attn_indexer_kpool.py:$VLLM_PKG/model_executor/layers/sparse_attn_indexer_kpool.py:ro \
     -v $OVERLAY_REMOTE/overlay/glm47_moe.py:$VLLM_PKG/parser/glm47_moe.py:ro \
     -v $OVERLAY_REMOTE/overlay/abstract_parser.py:$VLLM_PKG/parser/abstract_parser.py:ro \
+    -v $OVERLAY_REMOTE/overlay/kv_cache_coordinator.py:$VLLM_PKG/v1/core/kv_cache_coordinator.py:ro \
     -v \"$OVERLAY_REMOTE/overlay/$MOE_JSON:$VLLM_PKG/model_executor/layers/fused_moe/configs/$MOE_JSON:ro\" \
     -e VLLM_HOST_IP=$ip -e HF_HUB_OFFLINE=1 -e TRANSFORMERS_OFFLINE=1 -e HF_HUB_DISABLE_IMPLICIT_TOKEN=1 \
     -e VLLM_WORKER_MULTIPROC_METHOD=spawn -e VLLM_ENGINE_READY_TIMEOUT_S=3600 -e PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True \

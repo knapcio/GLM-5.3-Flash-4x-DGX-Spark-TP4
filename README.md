@@ -126,6 +126,7 @@ overlay/adaptive_draft_scheduler.py   per-request draft length in {K_LO, K_HI} f
 overlay/adaptive_k_scheduler.py       jnardiello's adaptive verification length (base class)
 overlay/sparse_attn_indexer_kpool.py  tonyd2wild's SM121 indexer patch
 overlay/glm47_moe.py, abstract_parser.py   GLM parser fixes (literal tool delimiters, stop anchors)
+overlay/kv_cache_coordinator.py       tonyd2wild's prefix-cache repair for the DFlash2 draft group (patch script alongside)
 overlay/E=288,N=512,...GB10...json     Triton MoE config for the FP8 lane
 scripts/prewarm.py             page-cache prewarm sidecar (measured: no gain here, kept for NFS setups)
 bench/bench_matrix.py          single-stream matrix (code / prose / JSON / agent, high and low)
@@ -160,6 +161,9 @@ against static k=7: prose +12 %, code and JSON unchanged.
 - A long prefill (50k+) stalls the other decoding streams for its duration (chunked prefill shares
   the step budget). `--long-prefill-token-threshold` trades newcomer TTFT for decoder responsiveness;
   not enabled here.
+- Prefix caching works only with `overlay/kv_cache_coordinator.py` mounted (tonyd2wild's repair, `patch_prefix_cache_draft_group.py`
+  applied to the image's file): a repeated ~20k-token prompt goes from 8.1 s to 0.63 s TTFT with 94 % of blocks hit;
+  the stock v11 image reports 0 hits, so every agent turn re-prefills the whole conversation.
 - First batch-2 request after boot pays ~6 s of TTFT once (kernel JIT).
 - Boot is ~14 min; ~6.5 min of it is 74k per-expert `copy_` calls from mmap-backed tensors at ~0.4 GB/s
   (profiled: iterator 7 s, copies 376 s, Marlin repack 8 s). A byte-bounded page-cache prewarm without the
