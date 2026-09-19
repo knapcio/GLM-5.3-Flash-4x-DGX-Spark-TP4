@@ -57,7 +57,8 @@ bit-close to stock): best candidate `gate_up 128x128 1-stage` +2.0 % on the MoE 
 decode step; `down_*` overrides are neutral to −15 %. No thin-decode win is available without a new kernel.
 
 What did not help (all measured, all rejected): `cudagraph_mode FULL_AND_PIECEWISE` (equal to
-`FULL_DECODE_ONLY`), trimming the CUDA-graph capture list to `[1,2,4]` (−7 to −12 % at some
+`FULL_DECODE_ONLY`), `K_LO=2` instead of 3 (prose 38 → 31 tok/s: too short a verify window), `BATCHED_TOKENS=8192` (decode
+unchanged, prefill not measured), trimming the CUDA-graph capture list to `[1,2,4]` (−7 to −12 % at some
 concurrencies: the DFlash families are token-count indexed), a host-side shard prewarm during weight
 loading (the loader is CPU-bound at 3.9 s per shard, not disk-bound).
 
