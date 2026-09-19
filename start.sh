@@ -58,7 +58,7 @@ run_rank() {
     --host ${HOST_BIND:-127.0.0.1} --port ${PORT:-8093} --disable-custom-all-reduce \
     --speculative-config '$(spec_json)' --scheduler-cls adaptive_draft_scheduler.AdaptiveDraftScheduler \
     --compilation-config '{\"mode\": 0, \"cudagraph_mode\": \"FULL_DECODE_ONLY\", \"cudagraph_capture_sizes\": ${CAPTURE_SIZES}, \"max_cudagraph_capture_size\": ${CAPTURE_MAX}}' \
-    --limit-mm-per-prompt '{\"image\":4,\"video\":0}' --mm-processor-cache-gb 0.25 --mm-processor-kwargs '{\"max_pixels\":6422528,\"max_image_tokens\":4096}' $extra"
+    --limit-mm-per-prompt '{\"image\":${MM_IMAGES:-16},\"video\":0}' --mm-processor-cache-gb ${MM_CACHE_GB:-4} --mm-processor-kwargs '{\"max_pixels\":6422528,\"max_image_tokens\":4096}' $extra"
   if [[ ${PREWARM:-1} == 1 ]]; then
     rssh "$h" "nohup python3 $OVERLAY_REMOTE/scripts/prewarm.py $MODEL_DIR ${CTN}-r$r 3 4 > $OVERLAY_REMOTE/cache/prewarm-r$r.log 2>&1 &"
   fi

@@ -173,6 +173,9 @@ against static k=7: prose +12 %, code and JSON unchanged.
 - SGLang TP4 (`docs/sglang/`): works on the DSV4.1 image with the GB10 TileLang tile patch (block_I 32, 1
   stage, 128 threads); no adaptive draft for DFLASH there, speed equal to vLLM at the same k, quality gate
   68/75. Not the production path.
+- With many images per prompt the API server aborts with `Expected a cached item for mm_hash=...` when
+  `--mm-processor-cache-gb` is small (0.25 GB did it at ~15 images x 3.4k tokens); the launcher now defaults to
+  4 GB (`MM_CACHE_GB`), 0 disables the cache entirely.
 - The DFlash2 drafter is CC BY-NC-ND 4.0.
 
 See [CREDITS.md](CREDITS.md): the image, the launch line, the adaptive verification scheduler and the
