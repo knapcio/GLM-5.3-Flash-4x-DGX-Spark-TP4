@@ -85,6 +85,36 @@ tests) gave DeepSeek 172 s for 6/6 and GLM 243-245 s for 6/6 and 5/6 on two runs
 reported as passing because the agent ran the test file as a script). In tool loops both models think
 little, so per-token speed decides, and there DeepSeek's 61 tok/s wins.
 
+## The 18 GiB the checkpoint leaves in BF16
+
+`RedHatAI/GLM-5.3-Flash-NVFP4` quantises only the routed experts. Everything else sits in its
+`ignore` list, so reading its safetensors headers gives:
+
+| dtype | tensors | size | what |
+|---|---:|---:|---|
+| U8 (NVFP4 experts) | 36,288 | 141.75 GiB | routed experts, layers 3-44 |
+| F8_E4M3 | 37,152 | 24.47 GiB | expert scales, layer-45 experts |
+| **BF16** | **2,379** | **18.01 GiB** | attention 11.52, dense MLP 2.95, embeddings 1.18, head 1.18, vision 0.91 |
+
+Those 18 GiB are read on every decode step: 4.5 GiB per rank at TP4, about 18 ms at 250 GB/s.
+tonyd2wild quantised them and measured the step falling from 67.6 ms to 57 ms, with prose +27 %
+(https://github.com/tonyd2wild/GLM-5.3-Flash-NVFP4-1M-KV-4x-DGX-Spark).
+
+`scripts/quantize_dense_nvfp4.py` reproduces that offline, shard by shard, with no GPU and no
+calibration data, because the scheme is symmetric static weight-only. It writes the same tensor
+layout the routed experts already use, and moves the layer names out of `ignore`. Two schemes, and
+the self-test prints the cost of each on random weights of these shapes:
+
+| scheme | bytes per weight | relative RMS error | 18.01 GiB becomes |
+|---|---:|---:|---:|
+| `--scheme fp8` (default), block 128x128 | 1.00 | 2.6 % | ~9 GiB |
+| `--scheme nvfp4`, block 16 with a per-block scale search | 0.50 | 8.8 % | ~4.7 GiB |
+
+FP8 is the default here because it keeps most of the bandwidth win at a third of the error, and
+attention is the part RedHat deliberately did not quantise. Neither is validated by a boot yet:
+vLLM has to accept these shapes on SM121, and `bench/qeval.py` plus `bench/hardset.py` decide
+whether the quality holds. Embeddings, the head and the vision tower are left alone.
+
 ## Fidelity: FP8 vs NVFP4
 
 NVFP4 is measurably further from BF16 than FP8 (KL divergence on malaiwah's panel: FP8 0.021, NVFP4
