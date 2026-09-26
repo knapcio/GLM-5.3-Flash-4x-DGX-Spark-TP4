@@ -1,33 +1,29 @@
 # GLM-5.3-Flash on 4× DGX Spark
 
-A measured **vLLM TP4** recipe for GLM-5.3-Flash on four NVIDIA DGX Spark / GB10 nodes connected through a RoCE switch. The accepted profile is **LVKP-S-L2**, qualified on 2026-09-26: NVFP4 routed experts, 8-bit non-expert weights, DFlash2, FP8 KV cache, and one OpenAI-compatible endpoint for text, tools, reasoning and images.
+Run **GLM-5.3-Flash on four NVIDIA DGX Spark / GB10 nodes** with vLLM TP4, NVFP4 routed experts, 8-bit non-expert weights and DFlash2 speculative decoding. The LVKP-S-L2 profile supports **262k context**, up to **32 concurrent sequences**, and an OpenAI-compatible API for text, tools, reasoning and images. The tested fleet uses a RoCE switch.
 
 This recipe builds on **tonyd2wild's SM121 vLLM image**, **Jacopo Nardiello's scheduler**, **local-inference-lab's b12x / RoCEnante**, **incoai's DFlash2** and the upstream vLLM kernels. See [full credits and component licences](CREDITS.md).
 
 ## Current measurements
 
-The release figures are from **sparkDash DecodeBench**, 256 output tokens, temperature 0, thinking off, on the accepted L2 production stack. Prose c1 uses the median of **5** scored runs; prose c4 uses the median of **3** aggregate-throughput runs. Two warm-ups are excluded. Other matrix cells are single measurements, not repeated-run medians.
-
-Measured on **2026-09-26 after restoring production**, with all 20 jobs / 100 streams validated:
+**Decode throughput, tok/s — sparkDash, 2026-09-26.** 256 output tokens, temperature 0, thinking off. At c2–c16, values are aggregate throughput across all concurrent streams.
 
 | Prompt | c1 tok/s | c2 aggregate | c4 aggregate | c8 aggregate | c16 aggregate |
 |---|---:|---:|---:|---:|---:|
-| Prose | **70.19** (n=5) | 107.45 | **152.89** (n=3) | 221.70 | **312.69** |
-| Code | 126.44 | — | 185.37 | — | 308.26 |
-| Structured | 161.11 | — | — | — | 323.78 |
-| JSON | 124.25 | — | — | — | 476.41 |
+| Prose | **70.19** | 107.45 | **152.89** | 221.70 | **312.69** |
+| Code | 126.44 | 160.34 | 185.37 | 231.27 | 308.26 |
+| Structured | 161.11 | 140.48 | 196.68 | 242.16 | 323.78 |
+| JSON | 124.25 | 115.55 | 193.62 | 303.75 | 476.41 |
 
-All unmarked cells have n=1. A dash means this matrix did not measure that cell. [Samples, checks and provenance](docs/results/2026-09-26-l2.md) · [Machine-readable results](docs/results/2026-09-26-l2.json).
+Prose c1 is the median of five runs; prose c4 is the median of three. Other cells are single runs. These are short-prompt decode measurements. [Results and methodology](docs/results/2026-09-26-l2.md) · [Additional measurements](docs/results/2026-09-26-l2-supplement.md).
 
-The earlier L2 promotion measurement was 70.84 / 151.41 tok/s at prose c1 / aggregate c4. The fresh measurement is a repeat on the same accepted configuration, not another optimization.
+**Prefill probe:** **~2.2k input tokens/s at 16k–64k**, measured to the first output token, with three runs per prompt length. [Prefill measurements](docs/results/2026-09-26-prefill.md).
 
-Performance is workload-dependent. These short-prompt decode measurements do not predict long-context decode or reasoning throughput. c4 aggregate throughput is the combined output rate, not the rate of each user stream.
-
-The same accepted L2 stack passed **qeval 75/75 at c1 and 75/75 at c4**. Its retained KLD measurement is **0.0288366**, over **17 items / 6,618 teacher-forced positions**, against the recorded BF16-attention reference. These quality results were retained, not rerun with the fresh performance matrix. This is a specific reference and test panel, not a claim of equality to the full BF16 model. The exact KLD panel contains private operational material and is not distributed; its hashes document provenance but do not make that specific value reproducible from this repository alone. The long-context registry sanity gate passed **32/32 lookups at both concurrencies**, with approximately 9.6k-token prompts; it is not a 262k-context quality qualification. See [validation and provenance](docs/validation.md).
+**Quality:** qeval **75/75 at c1 and c4**. The separate teacher-forced KLD evaluation measured **0.02884** against the BF16-attention reference on a private 17-item panel. See [validation](docs/validation.md) for the reference, test scope and reproducibility limits.
 
 ## Serving profile
 
-| Component | Accepted setting |
+| Component | Setting |
 |---|---|
 | Target | NVIDIA NVFP4 routed experts; `lossless8` non-expert conversion |
 | Non-expert weights | KDA projections on the MXFP8 grid; MLA and shared-expert projections in block-128 FP8; selected tensors retained in BF16 |
@@ -41,7 +37,7 @@ The same accepted L2 stack passed **qeval 75/75 at c1 and 75/75 at c4**. Its ret
 | Communication | RoCEnante small all-reduce / all-gather; NCCL over both configured RoCE rails |
 | API | Loopback on the head, port 8093; served model alias `GLM-5.3-Flash-FP8` |
 
-`lossless8` is the historical **profile name**, not a mathematically lossless conversion from BF16. The representation was chosen per tensor to stay close to the released weights. See [weight preparation](docs/weights.md) for the conversion and model licences. The API alias is retained for client compatibility; it does not mean the routed experts are FP8.
+The `lossless8` conversion chooses an 8-bit representation per tensor to reduce re-encoding error; the name does not imply mathematical losslessness. See [weight preparation](docs/weights.md). The historical API alias `GLM-5.3-Flash-FP8` is kept for client compatibility.
 
 ## Reproduce
 
@@ -65,25 +61,24 @@ curl http://127.0.0.1:8093/v1/chat/completions \
   -d '{"model":"GLM-5.3-Flash-FP8","messages":[{"role":"user","content":"What is 19 + 23?"}],"max_tokens":128,"chat_template_kwargs":{"reasoning_effort":"low"}}'
 ```
 
-Run the [validation procedure](docs/validation.md) on your deployment. The recorded results qualify the existing production stack; publishing this recipe does **not** constitute a new fresh-clone build-and-boot validation.
+Run the [validation procedure](docs/validation.md) on your deployment. These measurements come from the qualified serving stack; a fresh deployment from the public package has not yet been tested on all four nodes.
 
 ## What the optimized stack does
 
 - **Batch-uniform adaptive draft:** picks one draft length for the whole running batch, avoiding mixed-k steps that fall back from full CUDA graph replay.
-- **KDA verification-state stash and trims:** reuses verification state and removes redundant copies / flag work. The stash has a measured FP32-state difference at the ulp level; the release does not claim whole-model byte identity.
+- **KDA verification-state stash and trims:** reuses verification state and removes redundant copies / flag work. FP32-state differences are at the ulp level.
 - **Replicated projection splitting:** distributes supported repeated projection work across ranks. Target paths carry numerical checks; the drafter remains subject to target verification.
 - **Vocab-parallel greedy selection:** avoids gathering full target logits where the sampling contract permits exact argmax, including compatible min-token requests.
-- **L2 prefetch:** overlaps read-only weight prefetch with attention / communication. The accepted in-boot qualification measured step savings of **0.610 ms at c1** and **0.727 ms at c4**; these are auxiliary step-timer results, not token-throughput measurements.
+- **L2 prefetch:** overlaps read-only weight prefetch with attention / communication. Step-time measurements are recorded in [history](docs/history.md).
 - **Indexer correctness fixes:** carries padded seed stride, speculative ring and hybrid tail-slot mapping fixes together.
-- **Faster loading and persistent JIT caches:** uses the slab loader and keeps compilation caches between boots. A retained warm-cache L2 boot took **129 seconds**; first setup and a cold compile are different workloads.
+- **Faster loading and persistent JIT caches:** uses the slab loader and keeps compilation caches between boots. Measured warm-cache boot: **129 seconds**. First-time compilation takes longer.
 
-The enabled switches and their implementation are listed in [runtime notes](docs/runtime.md). Experimental modules may be retained as source dependencies, but GDN metadata optimization, router deduplication, mHC fusion and diagnostic A/B hooks are **off** in the accepted profile.
+See [runtime notes](docs/runtime.md) for enabled switches, source versions and implementation details.
 
-## Limits and history
+## Further reading
 
-- Performance measurements use one four-node switched fleet; other networks and software versions need their own validation.
-- Greedy output text can vary on this runtime. Tensor-level checks, quality scores and KLD are the qualification evidence; matching prose alone is insufficient.
-- A qeval pass does not establish broad benchmark parity or long-run stability. Native tools, reasoning and vision depend on the pinned parser and model-template versions.
-- The drafter has its own licence. The repository licence does not relicense model weights or upstream components.
-
-Previous stacks, benchmark settings, comparisons and rejected experiments are in [history](docs/history.md). The [2026-09-18 README](docs/history-2026-09-18.md) is preserved separately; its numbers are not the current release figures.
+- [Installation](docs/install.md): image build, NCCL, fabric settings and launch.
+- [Weight preparation](docs/weights.md): target and drafter conversion, model licences.
+- [Validation](docs/validation.md): benchmark commands, quality checks and known limits.
+- [History](docs/history.md): earlier results and optimization experiments.
+- [Credits](CREDITS.md): upstream authors, projects and component licences.

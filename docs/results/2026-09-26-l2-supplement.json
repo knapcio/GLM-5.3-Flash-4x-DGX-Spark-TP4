@@ -1,0 +1,193 @@
+{
+  "schema": 1,
+  "date": "2026-09-26",
+  "recipe": "LVKP-S-L2",
+  "benchmark": "sparkDash DecodeBench",
+  "scope": "Supplemental missing cells, one observation each; prior headline medians unchanged",
+  "status": "PASS",
+  "jobs": 8,
+  "streams": 38,
+  "collector_sha256": "8665bfea1fed60e162fb042d55b214e8a3e0b1d951f7644d561a540428a4bf7b",
+  "wrapper_sha256": "5ae7916fb9891c39f7d86f45fd15ce5c14f2799c76180fa6db8530d1eb403784",
+  "raw_sha256": "a652a155b10719e5485d6d4bba8499d0a464a2d8e5b6cca365a4311f67664504",
+  "receipt_sha256": "c832e09b0763d6c66bfdce8d4783f14e982b6c3b454d643e2db5b2a10a7218e8",
+  "samples": [
+    {
+      "prompt_kind": "code",
+      "concurrency": 2,
+      "runs": 1,
+      "mean_decode_tokens_per_second": 81.53,
+      "aggregate_decode_tokens_per_second": 160.34,
+      "stream_decode_tokens_per_second": [
+        82.89,
+        80.17
+      ],
+      "completion_tokens_per_stream": 256,
+      "decode_tokens_per_stream": 255,
+      "reasoning_chunks": 0
+    },
+    {
+      "prompt_kind": "code",
+      "concurrency": 8,
+      "runs": 1,
+      "mean_decode_tokens_per_second": 31.77,
+      "aggregate_decode_tokens_per_second": 231.27,
+      "stream_decode_tokens_per_second": [
+        34.65,
+        32.03,
+        35.26,
+        29.47,
+        30.63,
+        29.47,
+        33.74,
+        28.91
+      ],
+      "completion_tokens_per_stream": 256,
+      "decode_tokens_per_stream": 255,
+      "reasoning_chunks": 0
+    },
+    {
+      "prompt_kind": "structured",
+      "concurrency": 2,
+      "runs": 1,
+      "mean_decode_tokens_per_second": 80.32,
+      "aggregate_decode_tokens_per_second": 140.48,
+      "stream_decode_tokens_per_second": [
+        90.41,
+        70.24
+      ],
+      "completion_tokens_per_stream": 256,
+      "decode_tokens_per_stream": 255,
+      "reasoning_chunks": 0
+    },
+    {
+      "prompt_kind": "structured",
+      "concurrency": 4,
+      "runs": 1,
+      "mean_decode_tokens_per_second": 52.98,
+      "aggregate_decode_tokens_per_second": 196.68,
+      "stream_decode_tokens_per_second": [
+        60.96,
+        51.34,
+        49.17,
+        50.44
+      ],
+      "completion_tokens_per_stream": 256,
+      "decode_tokens_per_stream": 255,
+      "reasoning_chunks": 0
+    },
+    {
+      "prompt_kind": "structured",
+      "concurrency": 8,
+      "runs": 1,
+      "mean_decode_tokens_per_second": 32.61,
+      "aggregate_decode_tokens_per_second": 242.16,
+      "stream_decode_tokens_per_second": [
+        35.68,
+        31.14,
+        33.65,
+        31.95,
+        30.89,
+        33.65,
+        33.65,
+        30.27
+      ],
+      "completion_tokens_per_stream": 256,
+      "decode_tokens_per_stream": 255,
+      "reasoning_chunks": 0
+    },
+    {
+      "prompt_kind": "json",
+      "concurrency": 2,
+      "runs": 1,
+      "mean_decode_tokens_per_second": 61.73,
+      "aggregate_decode_tokens_per_second": 115.55,
+      "stream_decode_tokens_per_second": [
+        57.78,
+        65.68
+      ],
+      "completion_tokens_per_stream": 256,
+      "decode_tokens_per_stream": 255,
+      "reasoning_chunks": 0
+    },
+    {
+      "prompt_kind": "json",
+      "concurrency": 4,
+      "runs": 1,
+      "mean_decode_tokens_per_second": 51.44,
+      "aggregate_decode_tokens_per_second": 193.62,
+      "stream_decode_tokens_per_second": [
+        48.41,
+        50.54,
+        53.86,
+        52.94
+      ],
+      "completion_tokens_per_stream": 256,
+      "decode_tokens_per_stream": 255,
+      "reasoning_chunks": 0
+    },
+    {
+      "prompt_kind": "json",
+      "concurrency": 8,
+      "runs": 1,
+      "mean_decode_tokens_per_second": 41.9,
+      "aggregate_decode_tokens_per_second": 303.75,
+      "stream_decode_tokens_per_second": [
+        37.97,
+        40.74,
+        41.84,
+        43.35,
+        43.35,
+        41.84,
+        41.85,
+        44.28
+      ],
+      "completion_tokens_per_stream": 256,
+      "decode_tokens_per_stream": 255,
+      "reasoning_chunks": 0
+    }
+  ],
+  "summary": {
+    "code:c2": {
+      "n": 1,
+      "meanDecodeTps_median": 81.53,
+      "aggregateDecodeTps_median": 160.34
+    },
+    "code:c8": {
+      "n": 1,
+      "meanDecodeTps_median": 31.77,
+      "aggregateDecodeTps_median": 231.27
+    },
+    "structured:c2": {
+      "n": 1,
+      "meanDecodeTps_median": 80.32,
+      "aggregateDecodeTps_median": 140.48
+    },
+    "structured:c4": {
+      "n": 1,
+      "meanDecodeTps_median": 52.98,
+      "aggregateDecodeTps_median": 196.68
+    },
+    "structured:c8": {
+      "n": 1,
+      "meanDecodeTps_median": 32.61,
+      "aggregateDecodeTps_median": 242.16
+    },
+    "json:c2": {
+      "n": 1,
+      "meanDecodeTps_median": 61.73,
+      "aggregateDecodeTps_median": 115.55
+    },
+    "json:c4": {
+      "n": 1,
+      "meanDecodeTps_median": 51.44,
+      "aggregateDecodeTps_median": 193.62
+    },
+    "json:c8": {
+      "n": 1,
+      "meanDecodeTps_median": 41.9,
+      "aggregateDecodeTps_median": 303.75
+    }
+  },
+  "independent_review": "Exact source/plan/jobs/streams and summaries checked"
+}
