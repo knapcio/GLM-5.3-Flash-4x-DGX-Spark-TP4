@@ -6,16 +6,16 @@ This recipe builds on **tonyd2wild's SM121 vLLM image**, **Jacopo Nardiello's sc
 
 ## Current measurements
 
-**Decode throughput, tok/s — sparkDash, 2026-09-26.** 256 output tokens, temperature 0, thinking off. At c2–c16, values are aggregate throughput across all concurrent streams.
+**Decode throughput, tok/s — sparkDash, 2026-09-26.** 256 output tokens, temperature 0, thinking off. At c2–c16, values are aggregate throughput, with mean per-stream tok/s in parentheses.
 
 | Prompt | c1 tok/s | c2 aggregate | c4 aggregate | c8 aggregate | c16 aggregate |
 |---|---:|---:|---:|---:|---:|
-| Prose | **70.19** | 107.45 | **152.89** | 221.70 | **312.69** |
-| Code | 126.44 | 160.34 | 185.37 | 231.27 | 308.26 |
-| Structured | 161.11 | 140.48 | 196.68 | 242.16 | 323.78 |
-| JSON | 124.25 | 115.55 | 193.62 | 303.75 | 476.41 |
+| Prose | **70.19** | 107.45 (57.95) | **152.89** (39.39) | 221.70 (28.83) | **312.69** (20.34) |
+| Code | 126.44 | 160.34 (81.53) | 185.37 (50.37) | 231.27 (31.77) | 308.26 (21.37) |
+| Structured | 161.11 | 140.48 (80.32) | 196.68 (52.98) | 242.16 (32.61) | 323.78 (23.67) |
+| JSON | 124.25 | 115.55 (61.73) | 193.62 (51.44) | 303.75 (41.90) | 476.41 (32.25) |
 
-Prose c1 is the median of five runs; prose c4 is the median of three. Other cells are single runs. These are short-prompt decode measurements. [Results and methodology](docs/results/2026-09-26-l2.md) · [Additional measurements](docs/results/2026-09-26-l2-supplement.md).
+Prose c1 is the median of five runs; prose c4 reports the median of three runs for each metric. Other cells are single runs. These are short-prompt decode measurements. [Results and methodology](docs/results/2026-09-26-l2.md) · [Additional measurements](docs/results/2026-09-26-l2-supplement.md).
 
 **Prefill probe:** **~2.2k input tokens/s at 16k–64k**, measured to the first output token, with three runs per prompt length. [Prefill measurements](docs/results/2026-09-26-prefill.md).
 
