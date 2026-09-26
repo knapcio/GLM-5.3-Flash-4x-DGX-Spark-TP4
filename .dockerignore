@@ -1,0 +1,13 @@
+.git
+.env
+.env.*
+!.env.example
+cache
+logs
+runs
+__pycache__
+**/__pycache__
+*.pyc
+**/*.pyc
+*.safetensors
+**/*.safetensors

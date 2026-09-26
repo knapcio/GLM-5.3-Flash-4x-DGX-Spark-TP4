@@ -1,0 +1,365 @@
+{
+  "schema": 1,
+  "recipe": "LVKP-S-L2",
+  "date": "2026-09-26",
+  "benchmark": "sparkDash DecodeBench",
+  "collector_sha256": "8665bfea1fed60e162fb042d55b214e8a3e0b1d951f7644d561a540428a4bf7b",
+  "raw_sha256": "76fb90ee3d6c5373f7730ee05e273bc179ae9188444b021b5b3c34525b90a62b",
+  "validation": {
+    "status": "PASS",
+    "jobs": 20,
+    "scored_jobs": 18,
+    "discarded_warmups": 2,
+    "streams": 100,
+    "unique_jobs": true,
+    "finite_positive_decode_rates": true
+  },
+  "samples": [
+    {
+      "index": 0,
+      "phase": "warmup",
+      "prompt_kind": "prose",
+      "concurrency": 1,
+      "mean_decode_tokens_per_second": 69.02,
+      "aggregate_decode_tokens_per_second": 69.02,
+      "streams": 1,
+      "completion_tokens_per_stream": 256,
+      "decode_tokens_per_stream": 255,
+      "reasoning_chunks": 0
+    },
+    {
+      "index": 1,
+      "phase": "warmup",
+      "prompt_kind": "prose",
+      "concurrency": 1,
+      "mean_decode_tokens_per_second": 74.21,
+      "aggregate_decode_tokens_per_second": 74.21,
+      "streams": 1,
+      "completion_tokens_per_stream": 256,
+      "decode_tokens_per_stream": 255,
+      "reasoning_chunks": 0
+    },
+    {
+      "index": 2,
+      "phase": "matrix",
+      "prompt_kind": "prose",
+      "concurrency": 1,
+      "mean_decode_tokens_per_second": 70.28,
+      "aggregate_decode_tokens_per_second": 70.28,
+      "streams": 1,
+      "completion_tokens_per_stream": 256,
+      "decode_tokens_per_stream": 255,
+      "reasoning_chunks": 0
+    },
+    {
+      "index": 3,
+      "phase": "matrix",
+      "prompt_kind": "prose",
+      "concurrency": 1,
+      "mean_decode_tokens_per_second": 67.55,
+      "aggregate_decode_tokens_per_second": 67.55,
+      "streams": 1,
+      "completion_tokens_per_stream": 256,
+      "decode_tokens_per_stream": 255,
+      "reasoning_chunks": 0
+    },
+    {
+      "index": 4,
+      "phase": "matrix",
+      "prompt_kind": "prose",
+      "concurrency": 1,
+      "mean_decode_tokens_per_second": 72.74,
+      "aggregate_decode_tokens_per_second": 72.74,
+      "streams": 1,
+      "completion_tokens_per_stream": 256,
+      "decode_tokens_per_stream": 255,
+      "reasoning_chunks": 0
+    },
+    {
+      "index": 5,
+      "phase": "matrix",
+      "prompt_kind": "code",
+      "concurrency": 1,
+      "mean_decode_tokens_per_second": 126.44,
+      "aggregate_decode_tokens_per_second": 126.44,
+      "streams": 1,
+      "completion_tokens_per_stream": 256,
+      "decode_tokens_per_stream": 255,
+      "reasoning_chunks": 0
+    },
+    {
+      "index": 6,
+      "phase": "matrix",
+      "prompt_kind": "prose",
+      "concurrency": 2,
+      "mean_decode_tokens_per_second": 57.95,
+      "aggregate_decode_tokens_per_second": 107.45,
+      "streams": 2,
+      "completion_tokens_per_stream": 256,
+      "decode_tokens_per_stream": 255,
+      "reasoning_chunks": 0
+    },
+    {
+      "index": 7,
+      "phase": "matrix",
+      "prompt_kind": "prose",
+      "concurrency": 4,
+      "mean_decode_tokens_per_second": 39.39,
+      "aggregate_decode_tokens_per_second": 150.31,
+      "streams": 4,
+      "completion_tokens_per_stream": 256,
+      "decode_tokens_per_stream": 255,
+      "reasoning_chunks": 0
+    },
+    {
+      "index": 8,
+      "phase": "matrix",
+      "prompt_kind": "prose",
+      "concurrency": 8,
+      "mean_decode_tokens_per_second": 28.83,
+      "aggregate_decode_tokens_per_second": 221.7,
+      "streams": 8,
+      "completion_tokens_per_stream": 256,
+      "decode_tokens_per_stream": 255,
+      "reasoning_chunks": 0
+    },
+    {
+      "index": 9,
+      "phase": "matrix",
+      "prompt_kind": "prose",
+      "concurrency": 16,
+      "mean_decode_tokens_per_second": 20.34,
+      "aggregate_decode_tokens_per_second": 312.69,
+      "streams": 16,
+      "completion_tokens_per_stream": 256,
+      "decode_tokens_per_stream": 255,
+      "reasoning_chunks": 0
+    },
+    {
+      "index": 10,
+      "phase": "matrix",
+      "prompt_kind": "code",
+      "concurrency": 4,
+      "mean_decode_tokens_per_second": 50.37,
+      "aggregate_decode_tokens_per_second": 185.37,
+      "streams": 4,
+      "completion_tokens_per_stream": 256,
+      "decode_tokens_per_stream": 255,
+      "reasoning_chunks": 0
+    },
+    {
+      "index": 11,
+      "phase": "matrix",
+      "prompt_kind": "code",
+      "concurrency": 16,
+      "mean_decode_tokens_per_second": 21.37,
+      "aggregate_decode_tokens_per_second": 308.26,
+      "streams": 16,
+      "completion_tokens_per_stream": 256,
+      "decode_tokens_per_stream": 255,
+      "reasoning_chunks": 0
+    },
+    {
+      "index": 12,
+      "phase": "matrix",
+      "prompt_kind": "structured",
+      "concurrency": 1,
+      "mean_decode_tokens_per_second": 161.11,
+      "aggregate_decode_tokens_per_second": 161.11,
+      "streams": 1,
+      "completion_tokens_per_stream": 256,
+      "decode_tokens_per_stream": 255,
+      "reasoning_chunks": 0
+    },
+    {
+      "index": 13,
+      "phase": "matrix",
+      "prompt_kind": "structured",
+      "concurrency": 16,
+      "mean_decode_tokens_per_second": 23.67,
+      "aggregate_decode_tokens_per_second": 323.78,
+      "streams": 16,
+      "completion_tokens_per_stream": 256,
+      "decode_tokens_per_stream": 255,
+      "reasoning_chunks": 0
+    },
+    {
+      "index": 14,
+      "phase": "matrix",
+      "prompt_kind": "json",
+      "concurrency": 1,
+      "mean_decode_tokens_per_second": 124.25,
+      "aggregate_decode_tokens_per_second": 124.25,
+      "streams": 1,
+      "completion_tokens_per_stream": 256,
+      "decode_tokens_per_stream": 255,
+      "reasoning_chunks": 0
+    },
+    {
+      "index": 15,
+      "phase": "matrix",
+      "prompt_kind": "json",
+      "concurrency": 16,
+      "mean_decode_tokens_per_second": 32.25,
+      "aggregate_decode_tokens_per_second": 476.41,
+      "streams": 16,
+      "completion_tokens_per_stream": 256,
+      "decode_tokens_per_stream": 255,
+      "reasoning_chunks": 0
+    },
+    {
+      "index": 16,
+      "phase": "supplement",
+      "prompt_kind": "prose",
+      "concurrency": 1,
+      "mean_decode_tokens_per_second": 68.39,
+      "aggregate_decode_tokens_per_second": 68.39,
+      "streams": 1,
+      "completion_tokens_per_stream": 256,
+      "decode_tokens_per_stream": 255,
+      "reasoning_chunks": 0
+    },
+    {
+      "index": 17,
+      "phase": "supplement",
+      "prompt_kind": "prose",
+      "concurrency": 1,
+      "mean_decode_tokens_per_second": 70.19,
+      "aggregate_decode_tokens_per_second": 70.19,
+      "streams": 1,
+      "completion_tokens_per_stream": 256,
+      "decode_tokens_per_stream": 255,
+      "reasoning_chunks": 0
+    },
+    {
+      "index": 18,
+      "phase": "supplement",
+      "prompt_kind": "prose",
+      "concurrency": 4,
+      "mean_decode_tokens_per_second": 39.39,
+      "aggregate_decode_tokens_per_second": 152.89,
+      "streams": 4,
+      "completion_tokens_per_stream": 256,
+      "decode_tokens_per_stream": 255,
+      "reasoning_chunks": 0
+    },
+    {
+      "index": 19,
+      "phase": "supplement",
+      "prompt_kind": "prose",
+      "concurrency": 4,
+      "mean_decode_tokens_per_second": 38.46,
+      "aggregate_decode_tokens_per_second": 153.04,
+      "streams": 4,
+      "completion_tokens_per_stream": 256,
+      "decode_tokens_per_stream": 255,
+      "reasoning_chunks": 0
+    }
+  ],
+  "summary": {
+    "prose:c1": {
+      "n": 5,
+      "meanDecodeTps_median": 70.19,
+      "aggregateDecodeTps_median": 70.19
+    },
+    "code:c1": {
+      "n": 1,
+      "meanDecodeTps_median": 126.44,
+      "aggregateDecodeTps_median": 126.44
+    },
+    "prose:c2": {
+      "n": 1,
+      "meanDecodeTps_median": 57.95,
+      "aggregateDecodeTps_median": 107.45
+    },
+    "prose:c4": {
+      "n": 3,
+      "meanDecodeTps_median": 39.39,
+      "aggregateDecodeTps_median": 152.89
+    },
+    "prose:c8": {
+      "n": 1,
+      "meanDecodeTps_median": 28.83,
+      "aggregateDecodeTps_median": 221.7
+    },
+    "prose:c16": {
+      "n": 1,
+      "meanDecodeTps_median": 20.34,
+      "aggregateDecodeTps_median": 312.69
+    },
+    "code:c4": {
+      "n": 1,
+      "meanDecodeTps_median": 50.37,
+      "aggregateDecodeTps_median": 185.37
+    },
+    "code:c16": {
+      "n": 1,
+      "meanDecodeTps_median": 21.37,
+      "aggregateDecodeTps_median": 308.26
+    },
+    "structured:c1": {
+      "n": 1,
+      "meanDecodeTps_median": 161.11,
+      "aggregateDecodeTps_median": 161.11
+    },
+    "structured:c16": {
+      "n": 1,
+      "meanDecodeTps_median": 23.67,
+      "aggregateDecodeTps_median": 323.78
+    },
+    "json:c1": {
+      "n": 1,
+      "meanDecodeTps_median": 124.25,
+      "aggregateDecodeTps_median": 124.25
+    },
+    "json:c16": {
+      "n": 1,
+      "meanDecodeTps_median": 32.25,
+      "aggregateDecodeTps_median": 476.41
+    }
+  },
+  "retained_quality": {
+    "qeval": [
+      {
+        "concurrency": 1,
+        "passed": 75,
+        "total": 75,
+        "truncated": 0,
+        "measured_utc": "2026-09-26T15:31:21Z",
+        "raw_sha256": "78d6621fb3e1f1920195b616d51a45969b402a1321bf1f8d8c65d777ed8adff4",
+        "fresh_rerun": false
+      },
+      {
+        "concurrency": 4,
+        "passed": 75,
+        "total": 75,
+        "truncated": 0,
+        "measured_utc": "2026-09-26T15:32:11Z",
+        "raw_sha256": "8f7b111962382fee5244ad42196b6000515fd8bfbe7fa6de162c49bad3082739",
+        "fresh_rerun": false
+      }
+    ],
+    "kld": {
+      "mean": 0.028836615723741327,
+      "items": 17,
+      "teacher_forced_positions": 6618,
+      "estimator": "top20 folded-tail estimate",
+      "raw_sha256": "9e465e40287960ac0c255840df0daf31f5078376c1fe3f5e9680ca84ca7490b0",
+      "fresh_rerun": false,
+      "provenance": "retained raw structurally revalidated; original execution receipt not reconstructed"
+    },
+    "long_context": {
+      "c1": "32/32 PASS_SANITY",
+      "c4": "32/32 PASS_SANITY",
+      "prompt_tokens_min": 9597,
+      "prompt_tokens_max": 9642,
+      "fresh_rerun": false,
+      "provenance": "retained qualification verification log; not independently rerun here"
+    }
+  },
+  "prior_same_recipe": {
+    "prose_c1_median5": 70.84,
+    "prose_c4_aggregate_median3": 151.41,
+    "interpretation": "separate sessions; no causal attribution"
+  }
+}

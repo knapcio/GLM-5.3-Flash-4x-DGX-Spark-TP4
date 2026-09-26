@@ -1,0 +1,90 @@
+GLM-5.3-Flash — four DGX Spark recipe
+Copyright (c) 2026 knapcio for repository-owned contributions.
+
+This notice records source attribution and licence boundaries. It does not
+change upstream licences or grant rights that upstream has not granted.
+See CREDITS.md for author and pull-request links.
+
+1. Repository-owned material
+The top-level LICENSE contains the MIT grant for repository-owned material.
+Files with explicit SPDX identifiers retain those identifiers. In particular,
+the owner-authored GLM L2-prefetch and other Apache-tagged adapters are offered
+under Apache-2.0, not silently converted to MIT by the top-level licence.
+
+2. vLLM and SGLang
+Modified vLLM-derived files include overlay/{glm5next_model,glm5next_attention,
+glm5next_kda,glm5next_kpool_compress,mla_indexer,mamba_hybrid,
+kv_cache_coordinator,sparse_attn_indexer_kpool,glm47_moe,abstract_parser}.py.
+Their existing "Copyright contributors to the vLLM project" and Apache-2.0
+headers are retained. The GLM RoCEnante adapter derives from the vLLM shim
+by Jason Cook (original-el8), local-inference-lab/vllm pull request 597,
+merge ba233a681a37a13c2d5786da1a864ad30578d04f.
+The Hadamard-128 helper in glm5next_kpool_compress.py is identified by its
+source as ported from SGLang. Credit: SGLang contributors, Apache-2.0.
+The Apache licence text is in LICENSES/Apache-2.0.txt.
+These are locally modified integrations; they are not unmodified upstream
+releases. Per-file comments and docs/runtime-source-manifest.json identify
+local source and release preparation. The exact original SGLang file/revision
+for the small Hadamard helper has not been reconstructed.
+
+3. Flash Linear Attention
+The recurrent kernel underlying overlay/kda_stash.py and
+its strided derivative overlay/glm_kda_stash_fast.py comes through
+vLLM's third_party/flash_linear_attention/ops/fused_recurrent.py.
+Copyright (c) 2023-2025, Songlin Yang, Yu Zhang.
+The original MIT notice is in LICENSES/MIT-Flash-Linear-Attention.txt.
+The surrounding vLLM source also carries Apache-2.0 notices; both are retained.
+
+4. Community recipe code
+Jacopo Nardiello's adaptive scheduler retains its Apache source header and
+"Modifications (c) 2026 Jacopo Nardiello, MIT-licensed where separable" notice.
+LICENSES/MIT-Jacopo-Nardiello.txt contains his full MIT grant.
+LICENSES/MIT-Alex-Ellis.txt preserves the launch-recipe notice for
+Copyright (c) 2026 Alex Ellis, OpenFaaS Ltd.
+LICENSES/MIT-sparkDash.txt preserves the upstream benchmark-project notice.
+
+5. RoCEnante / b12x
+The vendored subset is pinned to b58f34eaf978277621efced6678e6713fd7122e4.
+Authors credited by that source: Local Inference Lab, Luke Alonso
+(lukealonso), Jason Cook (original-el8).
+See roce/b12x/PROVENANCE.json and roce/b12x/LICENSE (Apache-2.0).
+Per-file notices apply as well: for example, b12x/_lib/dense_gemm.py retains
+NVIDIA's copyright and full BSD-3-Clause text. Do not remove those notices
+when redistributing the subset.
+
+6. Inherited upstream licence declaration gap
+The tonyd2wild 2-Spark recipe public source tree inspected on 2026-09-26
+has no LICENSE/NOTICE file. Its patch_prefix_cache_draft_group.py has no
+per-file licence declaration. This repository already carried that patch
+and attribution before this release. We preserve its origin rather than
+assigning a new licence to Tony's contribution.
+
+Additional Tony-origin material is referenced by the base container and
+release runtime: sparse/indexer modifications, MoE configuration and the
+SM121 RoCEnante port. The newly included local wrappers
+roce/glm_roce/adapter.py and install.py explicitly credit both the Apache
+vLLM #597 shim and Tony's image-specific changes. This notice establishes
+neither a blanket licence for Tony-specific additions nor redistribution
+permission beyond the identified upstream grants. Consult the upstream
+source/maintainer to resolve that scope before relying on it. A public
+source URL and this attribution are not a substitute for a licence grant.
+
+7. DeepSeek transfer scope
+The GLM L2 CUDA body matches knapcio's ds41 contribution a525cd88eddf0916b4d01be09c79cbc68f08ebf2,
+except for its exported function name. The GLM file uses fixed target
+windows. That contribution's local GLM distribution has an Apache-2.0 SPDX
+header. Other owner-authored projection/eager-glue ideas are credited in
+CREDITS.md. No blanket relicensing of ds41 is claimed: its AGPL-3.0-or-later,
+original recipe attribution and third-party notices remain applicable to
+their respective sources. The separate rchmagos ring-module discovery
+change is not part of the GLM fixed-window L2 implementation.
+
+8. External software and models
+No model weights are distributed here. The current NVIDIA target and Z.AI
+base model have their own model-card licence terms. Inco AI's DFlash2 model
+card specifies CC BY-NC-ND 4.0; the locally converted draft is not licensed
+by this repository's MIT or Apache notices. Refer to the source model card
+for use, conversion and redistribution questions.
+CUDA, NCCL, PyTorch, Triton, FlashInfer, CUTLASS and other dependencies in
+external images retain their respective licences. This source notice is
+not an inventory or relicensing of every component in a container image.
