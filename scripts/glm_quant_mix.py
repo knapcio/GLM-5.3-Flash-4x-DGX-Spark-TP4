@@ -22,7 +22,7 @@ Formats on disk (what vLLM's ModelOpt linear methods in the pinned image load):
          weight_scale_2 F32 [1] = amax_group/(448*6); one amax per fused group (vLLM refuses mixed global
          scales in a fused W4A16 layer)                                              -> Marlin W4A16
 Subcommands: inventory | proxy | plan | quant | strip | assemble | verify | estimate | selftest
-All CPU. Memory: one fused group at a time (<1.5 GB peak); raw bytes are streamed with copy_file_range.
+All CPU. Quantization processes fused groups but retains output bytes until writing; peak RAM is not bounded here.
 """
 import argparse, collections, json, math, os, re, struct, sys, time
 
