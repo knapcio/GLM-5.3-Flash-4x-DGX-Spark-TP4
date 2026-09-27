@@ -29,6 +29,14 @@ def verify(containers, name, overlay):
                 raise RuntimeError('overlay overlaps a preserved container mount: '+c['Name'])
 
 
+# Only acquire fields consumed by verify. Config.Env, labels and commands are
+# never requested, even temporarily before redaction.
+INSPECT_FORMAT = ('{"Name":{{json .Name}},"Mounts":['
+    '{{range $i, $m := .Mounts}}{{if $i}},{{end}}'
+    '{"Type":{{json $m.Type}},"Source":{{json $m.Source}},'
+    '"Mode":{{json $m.Mode}},"RW":{{json $m.RW}}}{{end}}]}')
+
+
 def main():
     p=argparse.ArgumentParser()
     p.add_argument('--container', required=True)
@@ -37,7 +45,8 @@ def main():
     if not Path(a.overlay).is_absolute():p.error('absolute overlay path required')
     # A failed daemon/auth query is never interpreted as an empty inventory.
     ids=subprocess.check_output(['docker','ps','-aq'],text=True).split()
-    data=json.loads(subprocess.check_output(['docker','inspect',*ids],text=True)) if ids else []
+    data=[json.loads(line) for line in subprocess.check_output(
+        ['docker','inspect','--format',INSPECT_FORMAT,*ids],text=True).splitlines()] if ids else []
     if len(data)!=len(ids):raise RuntimeError('incomplete container inventory')
     verify(data,a.container,a.overlay)
     print('runtime destination preflight PASS')

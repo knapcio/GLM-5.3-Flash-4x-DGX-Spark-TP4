@@ -39,11 +39,11 @@ class RuntimeTests(unittest.TestCase):
  def test_actual_launcher_refuses_existing_before_sync(self):
   with tempfile.TemporaryDirectory() as td:
    r=Path(td);b=r/'bin';b.mkdir();log=r/'log'
-   for name,body in {'ssh':'exec bash -c "${@: -1}"','docker':'''echo "$*" >> "$TEST_LOG"; if [[ $1 == ps ]]; then echo abc; else echo '[{"Name":"/existing-r0","Mounts":[]}]'; fi''' ,'rsync':'echo RSYNC >> "$TEST_LOG"; exit 99'}.items():
+   for name,body in {'ssh':'exec bash -c "${@: -1}"','docker':'''echo "$*" >> "$TEST_LOG"; if [[ $1 == ps ]]; then echo abc; else echo '{"Name":"/existing-r0","Mounts":[]}'; fi''' ,'rsync':'echo RSYNC >> "$TEST_LOG"; exit 99'}.items():
     p=b/name;p.write_text('#!/usr/bin/env bash\n'+body+'\n');p.chmod(0o755)
    env=r/'config';env.write_text('HOSTS="a b c d"\nIPS="1 2 3 4"\nCTN=existing\nOVERLAY_REMOTE=/unused\n')
    p=subprocess.run(['bash',str(ROOT/'start.sh'),'serve'],env={**os.environ,'PATH':str(b)+':'+os.environ['PATH'],'ENV_FILE':str(env),'TEST_LOG':str(log)},capture_output=True,text=True)
-   self.assertNotEqual(p.returncode,0);self.assertNotIn('RSYNC',log.read_text());self.assertIn('inspect abc',log.read_text())
+   self.assertNotEqual(p.returncode,0);self.assertNotIn('RSYNC',log.read_text());self.assertIn('inspect --format',log.read_text());self.assertIn('abc',log.read_text())
  def test_actual_dry_run_no_external_calls(self):
   with tempfile.TemporaryDirectory() as td:
    r=Path(td);b=r/'bin';b.mkdir();log=r/'calls'

@@ -68,6 +68,10 @@ Prior accepted L2 measurements and quality history are retained in [measurement 
 
 The `lossless8` conversion chooses an 8-bit representation per tensor to reduce re-encoding error; the name does not imply mathematical losslessness. See [weight preparation](docs/weights.md). The historical API alias `GLM-5.3-Flash-FP8` is kept for client compatibility.
 
+## Optional switchless transport
+
+For four directly cabled Sparks, see [the opt-in switchless ring configuration](docs/switchless.md). It requires a separately verified patched NCCL library and disables RoCEnante. The switched default and model settings remain unchanged. This source branch is not a new hardware or performance qualification.
+
 ## Reproduce
 
 1. Prepare four ARM64 DGX Sparks with Docker GPU access, working SSH management paths, and a verified RoCE fabric. Configure the real interface names, addresses and GID on your fleet.

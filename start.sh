@@ -9,6 +9,7 @@ ENV_FILE=${ENV_FILE:-.env}
 source "$ENV_FILE"
 CMD=${1:-status}
 read -r -a HOSTS <<<"$HOSTS"; read -r -a IPS <<<"$IPS"
+source scripts/transport.sh
 OVERLAY_REMOTE=${OVERLAY_REMOTE:-\$HOME/glm53-flash-4x-spark}
 VLLM_PKG=/usr/local/lib/python3.12/dist-packages/vllm
 MOE_JSON='E=288,N=512,device_name=NVIDIA_GB10,dtype=fp8_w8a8,block_shape=[128,128].json'
@@ -82,9 +83,7 @@ run_rank() {
     -e TRITON_CACHE_DIR=/cache/triton -e TORCHINDUCTOR_CACHE_DIR=/cache/inductor -e CUDA_CACHE_PATH=/cache/nv \
     -e VLLM_ADAPTIVE_K_HI=$K_HI -e VLLM_ADAPTIVE_K_LO=$K_LO -e VLLM_ADAPTIVE_K_MODE=per-request -e VLLM_ADAPTIVE_K_SEED=1.0 \
     -e VLLM_ADAPTIVE_K_DOWN=0.42 -e VLLM_ADAPTIVE_K_UP=0.58 -e VLLM_ADAPTIVE_K_ALPHA=0.15 -e VLLM_ADAPTIVE_K_SIGNAL=pos \
-    -e NCCL_NET=IB -e NCCL_IB_DISABLE=0 -e NCCL_NET_PLUGIN=none -e NCCL_IB_ROCE_VERSION_NUM=2 -e NCCL_IB_GID_INDEX=${NCCL_IB_GID_INDEX:-3} \
-    -e NCCL_SOCKET_IFNAME==$FABRIC_IFACE -e GLOO_SOCKET_IFNAME=$FABRIC_IFACE -e NCCL_IB_HCA==$IB_HCA \
-    -e NCCL_IB_MERGE_NICS=0 -e NCCL_CROSS_NIC=0 -e NCCL_NVLS_ENABLE=0 -e NCCL_CUMEM_ENABLE=0 -e NCCL_DEBUG=WARN \
+    $(transport_args) \
     $IMAGE serve /model --served-model-name $SERVED_NAME --dtype bfloat16 \
     --tensor-parallel-size 4 --nnodes 4 --node-rank $r --master-addr ${IPS[0]} --master-port ${MASTER_PORT:-29669} --distributed-executor-backend mp \
     --max-model-len $MAX_MODEL_LEN --kv-cache-dtype fp8_e4m3 --kv-cache-memory-bytes $KV_BYTES --gpu-memory-utilization ${GPU_UTIL:-0.85} \
@@ -103,6 +102,13 @@ run_rank() {
 
 case $CMD in
   serve)
+    configure_transport
+    if [[ ${TRANSPORT:-switched} == switchless ]]; then
+      printf -v library_code '%q' "$(cat scripts/check_switchless_nccl.py)"
+      for h in "${HOSTS[@]}"; do
+        rssh "$h" "python3 -c $library_code --library $NCCL_HOST_DIR/libnccl.so.2.30.7 --sha256 $SWITCHLESS_NCCL_SHA256"
+      done
+    fi
     # Inspect every preserved container before any source synchronization.
     # Ship code as an argument, so preflight works before scripts are installed.
     printf -v preflight_code '%q' "$(cat scripts/preflight_runtime.py)"

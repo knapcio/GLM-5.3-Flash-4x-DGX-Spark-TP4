@@ -1,0 +1,10 @@
+{
+  "source_commit": "364eca1",
+  "scope": "Four original switched docker-run argv arrays in launch order 3,2,1,0; only HOME normalized. Default .env.example/current.env.",
+  "sha256": [
+    "f449f87c28e832997128bc4c2512e361edccc6c9e90664ce4da6381f01ee71b5",
+    "9607196b31b84b1d7523039d4e50820cc057aa3932e9c01dbbae3765898b5f29",
+    "4507439a35df0c9565d9a92f88d810841ae1e23512a901ce4d19a6d04b6ad6df",
+    "fe1dd115533fa2f9272a1e77da47e4320c3c1ef8fdab3f50e19054e439089fb3"
+  ]
+}
