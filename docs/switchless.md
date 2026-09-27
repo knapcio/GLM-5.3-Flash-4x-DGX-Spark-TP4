@@ -27,8 +27,8 @@ including the KDA boundary repair, are retained.
   selection, extended IPv4 GIDs and PCI-domain preservation. The four-PF topology
   also needs the four-device support in that build. A two-device-only release is
   not sufficient merely because its filename is the same. See
-  [Alex Ellis's original switchless NCCL project](https://github.com/alexellis/switchless-nccl)
-  and the [othexmr fork's four-PF source](https://github.com/othexmr/switchless-nccl)
+  [Alex Ellis / OpenFaaS Ltd's switchless NCCL project](https://github.com/alexellis/switchless-nccl)
+  and the [othexmr four-PF source profile](https://github.com/othexmr/switchless-nccl/blob/feat/four-pf-source-integration/docs/dual-pf.md)
   for the transport source and patch provenance. Select a tested artifact and record its SHA256;
   do not substitute stock upstream NCCL or infer patch support from its version.
 - The same prepared weights and image prerequisites as the switched recipe.
