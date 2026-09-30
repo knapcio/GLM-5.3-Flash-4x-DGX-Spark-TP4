@@ -74,7 +74,9 @@ run_rank() {
   # moves the cache to the persistent per-node $OVERLAY_REMOTE/cache/fi (keyed by FlashInfer version and arch).
   # Measured on lv-final: boot 271 s (cold cache) -> 128 s (warm). FI_CACHE_PERSIST=0 restores the old behaviour.
   local xfi=""; [[ ${FI_CACHE_PERSIST:-1} == 1 ]] && xfi="-e FLASHINFER_WORKSPACE_BASE=/cache/fi"
-  local xenv=""; for kv in ${EXTRA_ENV:-}; do xenv="$xenv -e $kv"; done
+  # printf %q because the command crosses one more shell on the remote (values such as the
+  # ;-separated B12X_ROCE_PEER_HCA_MAPS must arrive as one argument); plain values are unchanged.
+  local xenv=""; for kv in ${EXTRA_ENV:-}; do xenv="$xenv -e $(printf '%q' "$kv")"; done
   local sched="--scheduler-cls ${SCHEDULER_CLS:-adaptive_draft_scheduler.AdaptiveDraftScheduler}"; [[ ${SCHEDULER_CLS:-} == none ]] && sched=""
   rssh "$h" "docker run -d --restart no --name ${CTN}-r$r --gpus all --network host --ipc host \
     --device /dev/infiniband --cap-add IPC_LOCK --ulimit memlock=-1 --ulimit stack=67108864 --ulimit nofile=1048576:1048576 \

@@ -38,6 +38,16 @@ class TransportTests(unittest.TestCase):
         return '\n'.join(['TRANSPORT=switchless', 'NCCL_HOST_DIR=/opt/test-nccl', 'SWITCHLESS_NCCL_SHA256='+'a'*64,
                           'SWITCHLESS_ADDR_RANGE=10.100.224.0/22', 'SWITCHLESS_SUBNET_PREFIX_LEN=24'])
 
+    RING_MAPS = '1=0/2,2=0/3,3=1/3;0=1/3,2=0/2,3=0/3;0=1/2,1=1/3,3=0/2;0=0/2,1=1/2,2=1/3'
+
+    def ring(self, maps=None):
+        return '\n'.join([self.switchless(), 'SWITCHLESS_ROCE_RING=1',
+                          'SWITCHLESS_ROCE_PEER_HCA_MAPS="' + (self.RING_MAPS if maps is None else maps) + '"'])
+
+    RING_TRANSPORT = {'GLM_ROCE_ALLREDUCE', 'B12X_ROCE_HCA', 'TORCH_USE_RTLD_GLOBAL', 'GLOO_SOCKET_IFNAME', 'MN_IF_NAME',
+                      'TP_SOCKET_IFNAME', 'GLM_ROCE_RING', 'B12X_ROCE_PEER_HCA_MAPS', 'GLM_ROCE_MAX_SIZE',
+                      'GLM_ROCE_GATHER_MAX_SIZE', 'B12X_ROCE_TWO_WAVE_THRESHOLD_BYTES'}
+
     def commands(self, text):
         matches = re.findall(r'^\[[^\]]+\] (docker run .*?)(?=\n\[|\nlaunched|\Z)', text, re.M | re.S)
         self.assertEqual(len(matches), 4)
@@ -87,6 +97,55 @@ class TransportTests(unittest.TestCase):
             self.assertEqual(e['NCCL_IB_MERGE_NICS'], '0')
             self.assertEqual(e['NCCL_IB_EXTENDED_IPV4_GIDS'], '1')
             self.assertEqual(e['NCCL_IB_PRESERVE_PCI_DOMAIN'], '1')
+
+    def test_switchless_ring_rocenante_env(self):
+        hcas = 'rocep1s0f0,rocep1s0f1,roceP2p1s0f0,roceP2p1s0f1'
+        orig = self.commands(self.render().stdout)
+        r = self.render(self.ring() + '\nIB_HCA=' + hcas)
+        self.assertEqual(r.returncode, 0, r.stderr)
+        ring = self.commands(r.stdout)
+        def strip(cmd):
+            out = []; i = 0
+            while i < len(cmd):
+                if cmd[i] == '-e' and (cmd[i+1].startswith('NCCL_') or cmd[i+1].split('=')[0] in self.RING_TRANSPORT):
+                    i += 2; continue
+                if cmd[i] == '-v' and cmd[i+1].endswith(':/opt/nccl:ro'): i += 2; continue
+                out.append(cmd[i]); i += 1
+            return out
+        for a, b in zip(orig, ring):
+            self.assertEqual(strip(a), strip(b))
+            e = self.env(b)
+            self.assertEqual(e['GLM_ROCE_ALLREDUCE'], '1')     # not forced to 0 in ring mode
+            self.assertEqual(e['GLM_ROCE_RING'], '1')
+            self.assertEqual(e['B12X_ROCE_HCA'], hcas)
+            self.assertEqual(e['B12X_ROCE_PEER_HCA_MAPS'], self.RING_MAPS)
+            self.assertEqual(e['GLM_ROCE_MAX_SIZE'], '262144')
+            self.assertEqual(e['GLM_ROCE_GATHER_MAX_SIZE'], '262144')
+            self.assertEqual(e['B12X_ROCE_TWO_WAVE_THRESHOLD_BYTES'], '0')
+            self.assertEqual(e['NCCL_ALGO'], 'Ring')
+            self.assertEqual(e['NCCL_SWITCHLESS_RING_ONLY'], '1')
+            self.assertNotIn('NCCL_IB_GID_INDEX', e)
+            self.assertEqual(e['LD_PRELOAD'], e['VLLM_NCCL_SO_PATH'])
+
+    def test_switchless_ring_rejections(self):
+        cases = [
+            self.ring() + '\nSWITCHLESS_ROCE_RING=2',
+            self.ring() + '\nTRANSPORT=switched',
+            self.switchless() + '\nSWITCHLESS_ROCE_RING=1',                                    # maps missing
+            self.ring(maps='1=0/2,2=0/3,3=1/3'),                                                # not four maps
+            self.ring(maps='1=0/2,2=0/3,2=1/3;0=1/3,2=0/2,3=0/3;0=1/2,1=1/3,3=0/2;0=0/2,1=1/2,2=1/3'),  # repeated peer
+            self.ring(maps='1=0/2,2=0/3,3=1/3;0=1/3,2=0/2,3=0/3;0=1/2,1=1/3,3=0/2;0=0/2,1=1/2,3=1/3'),  # peer == rank
+            self.ring(maps='1=0/0,2=0/3,3=1/3;0=1/3,2=0/2,3=0/3;0=1/2,1=1/3,3=0/2;0=0/2,1=1/2,2=1/3'),  # repeated HCA
+            self.ring(maps='1=0/4,2=0/3,3=1/3;0=1/3,2=0/2,3=0/3;0=1/2,1=1/3,3=0/2;0=0/2,1=1/2,2=1/3'),  # index out of range
+            self.ring() + '\nSWITCHLESS_ROCE_MAX_SIZE=100',                                     # not a multiple of 16
+            self.ring() + '\nEXTRA_ENV="$EXTRA_ENV GLM_ROCE_RING=0"',
+            self.ring() + '\nEXTRA_ENV="$EXTRA_ENV B12X_ROCE_PEER_HCA_MAPS=x"',
+            self.ring() + '\nEXTRA_ENV="$EXTRA_ENV GLM_ROCE_MAX_SIZE=4096"',
+            self.ring() + '\nEXTRA_ENV="$EXTRA_ENV B12X_ROCE_TWO_WAVE_THRESHOLD_BYTES=131072"',
+        ]
+        for case in cases:
+            with self.subTest(case=case):
+                self.assertNotEqual(self.render(case, dry=False).returncode, 0)
 
     def test_bad_config_rejected_before_remote(self):
         cases = ['TRANSPORT=oops', self.switchless()+'\nSWITCHLESS_NCCL_SHA256=bad',

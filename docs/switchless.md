@@ -84,21 +84,67 @@ the output, but the ones built on RoCEnante have nothing to act on:
 
 | Profile piece | On the ring |
 |---|---|
-| `GLM_ROCE_ALLREDUCE=1` (RoCEnante one-shot all-reduce and all-gather) | forced to `0`; every collective runs on the patched NCCL ring |
-| `B12X_ROCE_HCA` | removed (the image default stays, unused) |
-| `GATHER_ROUTE=1` (`GLM_ROCE_AG_DIM0_NCCL`, `overlay/glm_roce_gather_route.py`) | inert: it only moves gathers off RoCEnante, and they are all on NCCL already |
-| `GLM_ROCE_PROXY_CPUS=auto` | inert: there is no RoCE proxy thread to pin |
+| `GLM_ROCE_ALLREDUCE=1` (RoCEnante one-shot all-reduce and all-gather) | forced to `0` unless `SWITCHLESS_ROCE_RING=1`; without the mesh, every collective runs on the patched NCCL ring |
+| `B12X_ROCE_HCA` | removed unless `SWITCHLESS_ROCE_RING=1` (then set from `IB_HCA`) |
+| `GATHER_ROUTE=1` (`GLM_ROCE_AG_DIM0_NCCL`, `overlay/glm_roce_gather_route.py`) | inert without the mesh: it only moves gathers off RoCEnante, and they are all on NCCL already |
+| `GLM_ROCE_PROXY_CPUS=auto` | inert without the mesh (there is no RoCE proxy thread); in ring mode it pins the ring proxy thread |
 | L2 prefetch window A (`GLM_L2_PREFETCH=1`) | works |
-| L2 prefetch windows B / C / D (`GLM_L2_PREFETCH_AR`, `GLM_L2_PREFETCH_MLA_AR`, `GLM_L2_PREFETCH_DRAFT`, `L2PF_V2=1`) | arm but never fire: they are forked from the RoCEnante all-reduce hook, which never runs |
+| L2 prefetch windows B / C / D (`GLM_L2_PREFETCH_AR`, `GLM_L2_PREFETCH_MLA_AR`, `GLM_L2_PREFETCH_DRAFT`, `L2PF_V2=1`) | arm but never fire without the mesh: they are forked from the RoCEnante all-reduce hook; in ring mode they fork from the ring hook |
 | Everything else (kernels, drafting, scheduler, prefill package) | unchanged |
 
-So expect decode to be slower than the switched numbers in the README: every decode-size all-reduce pays NCCL's
-latency instead of RoCEnante's, and opposite nodes talk through a transit node.
+Without the mesh, expect decode to be slower than the switched numbers in the README: every decode-size
+all-reduce pays NCCL's latency instead of RoCEnante's, and opposite nodes talk through a transit node. With
+`SWITCHLESS_ROCE_RING=1` (next section) the same decode-size collectives run on the path-aware RoCEnante the
+DeepSeek-V4.1 recipe uses; prefill stays a few percent under the switched fleet either way (the ring bisection is
+one link, not two).
 
-RoCEnante needs a direct path to every peer. The DeepSeek-V4.1 recipe gets one on a ring with SparkRing's
-path-aware RoCEnante and hardware-forwarded opposite-node paths (`DSV41_ROCE_RING`, research-only, see its
-[switchless-ring notes](https://github.com/knapcio/DeepSeek-V4.1-Flash-4x-DGX-Spark-TP4/blob/main/docs/switchless-ring.md)).
-That has not been ported to this recipe; a ring port of `roce/glm_roce` would be the next step and is welcome as a PR.
+RoCEnante needs a path to every peer. On the ring that path is built in the neighbours' ConnectX-7 hardware
+(FujitsuPolycom/sparkring: an RDMA-TX tag plus a tc-hairpin redirect, no CPU in the data path), and the ring
+variant of RoCEnante (`b12x.comm.roce_ring`) routes each peer over it. This recipe vendors that package; the
+DeepSeek-V4.1 recipe's
+[switchless-ring notes](https://github.com/knapcio/DeepSeek-V4.1-Flash-4x-DGX-Spark-TP4/blob/main/docs/switchless-ring.md)
+document the mesh and its measurements.
+
+## RoCEnante on the ring (`SWITCHLESS_ROCE_RING=1`)
+
+Optional and off by default. It keeps the patched-NCCL pin and the ring NCCL environment, and additionally runs
+decode-size all-reduce/all-gather on `b12x.comm.roce_ring` through hardware-forwarded opposite-node paths.
+
+Prerequisites (all four hosts):
+
+- **the mesh**: sparkring's hardware forwarding installed and active (two `/32` routes per node, the tc hairpin
+  redirect rules on the neighbour-facing ports of both PCIe domains, and the RDMA-TX source markers), with the
+  driver profile sparkring qualifies (`hairpin_num_queues` 4 set at boot, `flow_steering_mode hmfs`, eswitch
+  `legacy`, `hw-tc-offload on`). The DeepSeek-V4.1 recipe's `scripts/ring_mesh/plan.py` (sparkring `f16b5f4`)
+  plans and installs it; its `env.txt` carries the peer maps;
+- **`SWITCHLESS_ROCE_PEER_HCA_MAPS`**: that `env.txt` value — four `;`-separated maps in TP rank order
+  (`peer=path0/path1`, absolute HCA indices). The launcher validates the shape and every index against
+  `IB_HCA` before any remote action;
+- **sizes that fit the hairpin queues**: `SWITCHLESS_ROCE_MAX_SIZE` / `SWITCHLESS_ROCE_GATHER_MAX_SIZE`
+  default to 262144, the cap for queue size 8192. Larger messages overflow the hairpin queue and the go-back-N
+  retransmits make them slower than NCCL. The forced `B12X_ROCE_TWO_WAVE_THRESHOLD_BYTES=0` is only safe
+  without drops, i.e. with the caps at or under the queue's.
+
+```sh
+SWITCHLESS_ROCE_RING=1
+SWITCHLESS_ROCE_PEER_HCA_MAPS="1=0/2,2=0/3,3=1/3;0=1/3,2=0/2,3=0/3;0=1/2,1=1/3,3=0/2;0=0/2,1=1/2,2=1/3"
+#SWITCHLESS_ROCE_MAX_SIZE=262144
+#SWITCHLESS_ROCE_GATHER_MAX_SIZE=262144
+```
+
+The launcher sets `GLM_ROCE_ALLREDUCE=1`, `GLM_ROCE_RING=1`, `B12X_ROCE_HCA`, the maps, both caps and
+`B12X_ROCE_TWO_WAVE_THRESHOLD_BYTES=0` itself; conflicting `EXTRA_ENV` entries are refused. Fail-stop is kept:
+with the default `GLM_ROCE_REQUIRE=1` a runtime that cannot start (missing map, broken mesh) makes every rank
+raise instead of quietly serving on NCCL.
+
+Validate on the boot log: one `GLM_ROCE_READY ... hcas=rocep1s0f0,rocep1s0f1,roceP2p1s0f0,roceP2p1s0f1` line
+per rank, plus the ring NCCL lines. On the fabric, an RDMA write to the opposite node with
+`--flow_label=16383` should cross the neighbour's tc rule in hardware (its `in_hw` counter rises, the
+neighbour's `IpForwDatagrams` stays flat).
+
+Effect: prefill stays a few percent under the switched fleet (the ring bisection), and decode approaches it —
+the sibling DeepSeek-V4.1 recipe measured ring `qeval` 81.8 vs switched 83.5 tok/s and decode step 33.3 vs
+33.0 ms with the same hardware-forwarding design.
 
 ## Evidence and limits
 
