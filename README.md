@@ -202,9 +202,11 @@ and pin by SHA256, and it turns RoCEnante off by default, so decode is slower th
 hardware-forwarded opposite-node paths installed (sparkring) and `SWITCHLESS_ROCE_RING=1` the same decode-size
 collectives run on `b12x.comm.roce_ring` and decode returns to the switched step times. Contributed by
 [@othexmr](https://github.com/othexmr) ([PR #1](https://github.com/knapcio/GLM-5.3-Flash-4x-DGX-Spark-TP4/pull/1)).
-Our fleet is switched, so this mode is **not tested here**: the switched launch is checked to be byte-identical,
-the switchless one only to render. Please [open an issue](https://github.com/knapcio/GLM-5.3-Flash-4x-DGX-Spark-TP4/issues)
-if it breaks for you ([what to include](docs/switchless.md#reporting-a-problem)).
+Upstream's own fleet is switched, so its checks cover the switched launch's byte-identity and a render of the
+switchless one; the opt-in `SWITCHLESS_ROCE_RING=1` variant has since been booted and measured on four Sparks
+([docs/switchless.md](docs/switchless.md#rocenante-on-the-ring-switchless_roce_ring1)). Please
+[open an issue](https://github.com/knapcio/GLM-5.3-Flash-4x-DGX-Spark-TP4/issues) if it breaks for you
+([what to include](docs/switchless.md#reporting-a-problem)).
 
 ## Benchmarks and gates
 

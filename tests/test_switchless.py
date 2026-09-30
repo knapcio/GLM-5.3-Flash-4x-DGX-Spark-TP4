@@ -133,6 +133,8 @@ class TransportTests(unittest.TestCase):
             self.ring() + '\nTRANSPORT=switched',
             self.switchless() + '\nSWITCHLESS_ROCE_RING=1',                                    # maps missing
             self.ring(maps='1=0/2,2=0/3,3=1/3'),                                                # not four maps
+            self.ring(maps='1=0/2, 2=0/3,3=1/3;0=1/3,2=0/2,3=0/3;0=1/2,1=1/3,3=0/2;0=0/2,1=1/2,2=1/3')
+            + '\nIB_HCA=rocep1s0f0,rocep1s0f1,roceP2p1s0f0,roceP2p1s0f1',                          # whitespace
             self.ring(maps='1=0/2,2=0/3,2=1/3;0=1/3,2=0/2,3=0/3;0=1/2,1=1/3,3=0/2;0=0/2,1=1/2,2=1/3'),  # repeated peer
             self.ring(maps='1=0/2,2=0/3,3=1/3;0=1/3,2=0/2,3=0/3;0=1/2,1=1/3,3=0/2;0=0/2,1=1/2,3=1/3'),  # peer == rank
             self.ring(maps='1=0/0,2=0/3,3=1/3;0=1/3,2=0/2,3=0/3;0=1/2,1=1/3,3=0/2;0=0/2,1=1/2,2=1/3'),  # repeated HCA
@@ -146,6 +148,13 @@ class TransportTests(unittest.TestCase):
         for case in cases:
             with self.subTest(case=case):
                 self.assertNotEqual(self.render(case, dry=False).returncode, 0)
+
+    def test_switchless_ring_maps_reject_whitespace(self):
+        # A whitespace map would pass shape checks but split across -e args in EXTRA_ENV.
+        case = (self.ring(maps='1=0/2, 2=0/3,3=1/3;0=1/3,2=0/2,3=0/3;0=1/2,1=1/3,3=0/2;0=0/2,1=1/2,2=1/3')
+                + '\nIB_HCA=rocep1s0f0,rocep1s0f1,roceP2p1s0f0,roceP2p1s0f1')
+        r = self.render(case)   # DRY render: validation only, no remote commands
+        self.assertNotEqual(r.returncode, 0, 'whitespace in the peer map must be rejected')
 
     def test_bad_config_rejected_before_remote(self):
         cases = ['TRANSPORT=oops', self.switchless()+'\nSWITCHLESS_NCCL_SHA256=bad',

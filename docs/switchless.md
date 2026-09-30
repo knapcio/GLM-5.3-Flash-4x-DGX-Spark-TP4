@@ -1,9 +1,10 @@
 # Optional four-Spark switchless ring
 
-> **Community-contributed, not tested on our fleet.** This mode was contributed by
+> **Community-contributed.** The base switchless mode was contributed by
 > [@othexmr](https://github.com/othexmr) in [PR #1](https://github.com/knapcio/GLM-5.3-Flash-4x-DGX-Spark-TP4/pull/1)
-> and rebased onto the 2026-09-29 release. Our four Sparks sit behind a RoCE switch, so we check only that the
-> switched launch is unchanged and that the switchless launch renders; we cannot boot it. If it breaks for you,
+> and rebased onto the 2026-09-29 release; upstream checks only that the switched launch is unchanged and that the
+> switchless launch renders. The optional RoCEnante-over-the-ring mode (`SWITCHLESS_ROCE_RING=1`, below) was built,
+> booted and measured on four Sparks on 2026-10-01. If the base mode breaks for you,
 > please [open an issue](https://github.com/knapcio/GLM-5.3-Flash-4x-DGX-Spark-TP4/issues) with the items listed
 > under [Reporting a problem](#reporting-a-problem).
 
@@ -39,8 +40,11 @@ including the KDA boundary repair, are retained.
   for the transport source and patch provenance. Select a tested artifact and record its SHA256;
   do not substitute stock upstream NCCL or infer patch support from its version.
 - The same prepared weights and image prerequisites as the switched recipe.
-  The RoCEnante-capable image can still be used, but RoCEnante is disabled in
-  this mode because its all-peer fabric assumptions do not hold for the ring.
+  The RoCEnante-capable image can still be used, but RoCEnante is off in this
+  mode by default because its all-peer fabric assumptions do not hold for the
+  ring; `SWITCHLESS_ROCE_RING=1` re-enables it with the ring variant once the
+  mesh below is installed (that variant needs an image carrying
+  `b12x.comm.roce_ring`).
 
 ## Configuration
 

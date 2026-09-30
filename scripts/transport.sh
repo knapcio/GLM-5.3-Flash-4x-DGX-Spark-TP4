@@ -37,6 +37,9 @@ import sys
 raw, hca_text = sys.argv[1], sys.argv[2]
 hcas = [h for h in hca_text.split(',') if h]
 try:
+    # The value travels through EXTRA_ENV, which start.sh word-splits; whitespace
+    # would silently mangle the container's B12X_ROCE_PEER_HCA_MAPS.
+    assert not any(ch.isspace() for ch in raw), "no whitespace allowed in the map value"
     maps = [m.strip() for m in raw.split(';')]
     assert len(maps) == 4, "need four ';'-separated maps, one per rank"
     for rank, entry_text in enumerate(maps):
