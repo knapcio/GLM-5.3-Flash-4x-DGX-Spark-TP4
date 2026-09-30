@@ -1,5 +1,15 @@
 # Changelog
 
+## 2026-10-01 (RoCEnante on the switchless ring)
+- Optional `SWITCHLESS_ROCE_RING=1`: decode-size all-reduce/all-gather run on the vendored
+  `b12x.comm.roce_ring` over the hardware-forwarded opposite-node paths (sparkring `f16b5f4` bundle;
+  mesh install, `B12X_ROCE_PEER_HCA_MAPS` and the 256 KiB caps come from the DeepSeek-V4.1 recipe's
+  `ring_mesh` plan). The launcher validates maps and sizes before any remote action; the default
+  switchless launch stays byte-identical, the switched one untouched. `roce/test_ring_smoke.py` is a
+  4-rank exactness/transport check without vLLM or NCCL. On four Sparks: decode step at or below the
+  switched fleet (prose 33.8 vs 39.0 ms), structured c1 167.8 tok/s, prefill 16k-128k -7 %.
+  [docs/switchless.md](docs/switchless.md).
+
 ## 2026-09-29 (switchless ring, community PR #1)
 - Optional `TRANSPORT=switchless` for four Sparks cabled as a ring without a switch (patched NCCL pinned by
   SHA256, RoCEnante off), contributed by @othexmr. Not tested on our switched fleet. The default switched launch

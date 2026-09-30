@@ -142,9 +142,30 @@ per rank, plus the ring NCCL lines. On the fabric, an RDMA write to the opposite
 `--flow_label=16383` should cross the neighbour's tc rule in hardware (its `in_hw` counter rises, the
 neighbour's `IpForwDatagrams` stays flat).
 
-Effect: prefill stays a few percent under the switched fleet (the ring bisection), and decode approaches it —
-the sibling DeepSeek-V4.1 recipe measured ring `qeval` 81.8 vs switched 83.5 tok/s and decode step 33.3 vs
-33.0 ms with the same hardware-forwarding design.
+Effect (measured on this fleet, 2026-10-01, `glm53-roce:v12-ring-20261001`, default GPU clocks; the switched
+column is the README's published numbers):
+
+| | ring + RoCEnante | switched (README) | ring, NCCL only |
+|---|---:|---:|---:|
+| step ms, prose / code / JSON (`bench/accept_probe.py`) | 33.8 / 42.5 / 43.7 | 39.0 / 48.9 / 50.0 | ~45-47 (prose) |
+| sparkDash structured c1, 400 tok (best of two runs) | 167.8 tok/s | 168.8 tok/s | 104.4 tok/s |
+| cold prefill, 16k-128k (`bench/prefill_bench.py`) | 3,167-3,279 tok/s | 3,426-3,510 tok/s | — |
+
+The decode step is at or below the switched fleet's published step times; prefill stays ~7 % under (the ring
+bisection). Structured decode at c8/c16 is still below the switched single-run cells (287/288 vs 463/879 tok/s):
+part of that is the 256 KiB size cap pushing the larger verify all-reduces back to NCCL, part is single-run
+acceptance variance — raise `SWITCHLESS_ROCE_MAX_SIZE` only together with the hairpin queue size behind it.
+
+`roce/test_ring_smoke.sh` is a 4-rank check that needs no vLLM and no NCCL (gloo rendezvous, one all-reduce
+verified against gloo, one dim-0 all-gather); it prints `RING-SMOKE PASS` when the opposite-node paths carry
+data.
+
+Operational note: `hairpin.sh` re-initialises the RDMA functions when it changes `hairpin_queue_size`, and that
+flushes the **markers'** RDMA-TX rules. The marker processes stay alive, and `mesh-up.sh` starts them with
+`systemctl start` (a no-op for a running unit), so after any hairpin change restart them explicitly
+(`sudo systemctl restart dsv41-mesh-marker@<device>` for every marker device of that host). The symptom if
+forgotten: writes to the opposite node stall and fail with transport retry counter exceeded (vendor_err 0x81),
+while neighbour traffic still works.
 
 ## Evidence and limits
 

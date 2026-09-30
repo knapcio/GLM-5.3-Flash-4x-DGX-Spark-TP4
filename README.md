@@ -198,7 +198,9 @@ no existing container already uses the target name or overlay path.
 
 Four Sparks cabled as a ring, with no RoCE switch, can run this stack with `TRANSPORT=switchless`
 (`.env.switchless.example`, [docs/switchless.md](docs/switchless.md)). It needs a patched NCCL 2.30.7 that you build
-and pin by SHA256, and it turns RoCEnante off, so decode is slower than the numbers above. Contributed by
+and pin by SHA256, and it turns RoCEnante off by default, so decode is slower than the numbers above; with the
+hardware-forwarded opposite-node paths installed (sparkring) and `SWITCHLESS_ROCE_RING=1` the same decode-size
+collectives run on `b12x.comm.roce_ring` and decode returns to the switched step times. Contributed by
 [@othexmr](https://github.com/othexmr) ([PR #1](https://github.com/knapcio/GLM-5.3-Flash-4x-DGX-Spark-TP4/pull/1)).
 Our fleet is switched, so this mode is **not tested here**: the switched launch is checked to be byte-identical,
 the switchless one only to render. Please [open an issue](https://github.com/knapcio/GLM-5.3-Flash-4x-DGX-Spark-TP4/issues)
