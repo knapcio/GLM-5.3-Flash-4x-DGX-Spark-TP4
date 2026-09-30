@@ -14,6 +14,10 @@ Changes against #597:
 - ``GLM_ROCE_REQUIRE`` (default 1): if the vote disables the backend, every rank
   raises at start-up instead of silently serving on NCCL.  The verdict is shared,
   so all ranks raise together.  Set 0 for #597's log-and-continue behaviour.
+- ``GLM_ROCE_RING=1`` loads ``b12x.comm.roce_ring`` instead of ``b12x.comm.roce``:
+  the switchless-ring variant with per-peer paths (hardware-forwarded opposite-node
+  paths, ``B12X_ROCE_PEER_HCA_MAPS``).  Same API and vote; the runtime itself
+  refuses to start when the map or the mesh is missing.
 - Launchers and the alignment scratch are prepared right after construction,
   followed by a barrier, so a rank with a cold compile cache cannot make its
   peers spin in a RoCE wait during the eager profile run.
@@ -48,6 +52,9 @@ BACKEND_NAME = "GLM_ROCENANTE"
 ENV_MAX_SIZE = "GLM_ROCE_MAX_SIZE"
 ENV_GATHER_MAX_SIZE = "GLM_ROCE_GATHER_MAX_SIZE"
 ENV_REQUIRE = "GLM_ROCE_REQUIRE"
+ENV_RING = "GLM_ROCE_RING"
+ROCE_MODULE = "b12x.comm.roce"
+RING_MODULE = "b12x.comm.roce_ring"
 # Sizing (GLM-5.3-Flash, hidden 4096, bf16): a TP all-reduce is 8 KiB per token, so c16 x k7
 # (128 verify rows) is 1 MiB and c32 x k7 (256 rows) 2 MiB; 4 MiB leaves room for fp32
 # all-reduces and bigger mixed batches.  Prefill chunks (4096 tokens = 32 MiB) stay on NCCL.
@@ -121,14 +128,29 @@ def _in_the_same_node_as(group: ProcessGroup, source_rank: int = 0) -> list[bool
     return in_the_same_node_as(group, source_rank=source_rank)
 
 
+def roce_module_name(environ: Optional[dict] = None) -> str:
+    """The b12x collective package to load: ``b12x.comm.roce_ring`` with ``GLM_ROCE_RING=1``.
+
+    The ring variant mirrors the ``b12x.comm.roce`` surface but reaches the opposite
+    node through hardware-forwarded paths (FujitsuPolycom/sparkring, set up by the
+    mesh install); its runtime refuses to start without ``B12X_ROCE_PEER_HCA_MAPS``.
+    """
+    env = os.environ if environ is None else environ
+    return RING_MODULE if env.get(ENV_RING, "0").strip() == "1" else ROCE_MODULE
+
+
 def _import_roce():
-    from b12x.comm import roce
+    if roce_module_name() == RING_MODULE:
+        from b12x.comm import roce_ring as roce
+    else:
+        from b12x.comm import roce
 
     return roce
 
 
 class GlmRoceAllReduce:
-    """Route eligible tensor-parallel all-reduces and all-gathers to ``b12x.comm.roce``."""
+    """Route eligible tensor-parallel all-reduces and all-gathers to the selected
+    b12x package (``b12x.comm.roce``, or ``b12x.comm.roce_ring`` under ``GLM_ROCE_RING=1``)."""
 
     backend_name = BACKEND_NAME
 
@@ -225,20 +247,21 @@ class GlmRoceAllReduce:
 
     def _local_capability(self) -> tuple[Optional[str], Optional[tuple[int, int]]]:
         """This rank's reason for not taking part (None when it can) and its parsed limits."""
+        name = roce_module_name()
         try:
             roce = _import_roce()
         except Exception as exc:  # noqa: BLE001 - missing package or broken build
-            return f"b12x.comm.roce is not importable: {exc}", None
+            return f"{name} is not importable: {exc}", None
         api = getattr(roce, "API_VERSION", None)
         if api != REQUIRED_B12X_ROCE_API_VERSION:
             return (
-                f"b12x.comm.roce API version {api}, adapter needs "
+                f"{name} API version {api}, adapter needs "
                 f"{REQUIRED_B12X_ROCE_API_VERSION}"
             ), None
         try:
             supported = roce.is_supported(self.device)
         except Exception as exc:  # noqa: BLE001
-            return f"b12x.comm.roce.is_supported raised: {exc}", None
+            return f"{name}.is_supported raised: {exc}", None
         if not supported:
             return "needs an integrated GPU with an active RDMA device", None
         try:

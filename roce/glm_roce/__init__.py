@@ -2,11 +2,16 @@
 
 Routes tensor-parallel all-reduces and all-gathers at decode sizes to the b12x
 one-shot RoCE collectives; NCCL keeps everything else.  Nothing here runs unless
-GLM_ROCE_ALLREDUCE=1 is set in the container environment.
+GLM_ROCE_ALLREDUCE=1 is set in the container environment.  With
+``GLM_ROCE_RING=1`` the same surface is served by ``b12x.comm.roce_ring``, the
+switchless-ring variant with hardware-forwarded opposite-node paths.
 
 Credits:
 - RoCEnante (``b12x.comm.roce``): Local Inference Lab, Luke Alonso (@lukealonso)
   and Jason Cook (@original-el8), local-inference-lab/b12x#295 (Apache-2.0).
+- ``b12x.comm.roce_ring``, the ring transport and its mesh tooling:
+  FujitsuPolycom/sparkring (f16b5f4, Apache-2.0); ported through the
+  DeepSeek-V4.1-Flash-4x-DGX-Spark-TP4 recipe (DSV41_ROCE_RING, PR #8).
 - vLLM shim this package ports: Jason Cook (@original-el8),
   local-inference-lab/vllm#597 (``B12xRoceAllReduce``, the vote, the worker
   health check).

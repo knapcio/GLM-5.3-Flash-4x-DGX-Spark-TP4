@@ -222,6 +222,44 @@ def test_read_limits_defaults_and_validation():
     assert adapter_mod.require_enabled({"GLM_ROCE_REQUIRE": "0"}) is False
 
 
+# -- 1b. backend selection: GLM_ROCE_RING ------------------------------------------------
+
+
+def test_backend_module_selection():
+    name = adapter_mod.roce_module_name
+    assert name({}) == "b12x.comm.roce"
+    assert name({"GLM_ROCE_RING": "0"}) == "b12x.comm.roce"
+    assert name({"GLM_ROCE_RING": " "}) == "b12x.comm.roce"
+    assert name({"GLM_ROCE_RING": "1"}) == "b12x.comm.roce_ring"
+    assert name({"GLM_ROCE_RING": " 1 "}) == "b12x.comm.roce_ring"
+
+
+def test_import_roce_picks_the_selected_package():
+    saved: dict = {}
+    roce = fake_roce_module()
+    ring = fake_roce_module()
+    comm = types.ModuleType("b12x.comm")
+    comm.roce = roce
+    comm.roce_ring = ring
+    pkg = types.ModuleType("b12x")
+    pkg.comm = comm
+    for mod_name, mod in (
+        ("b12x", pkg),
+        ("b12x.comm", comm),
+        ("b12x.comm.roce", roce),
+        ("b12x.comm.roce_ring", ring),
+    ):
+        saved[mod_name] = sys.modules.get(mod_name)
+        sys.modules[mod_name] = mod
+    try:
+        with env(GLM_ROCE_RING=None):
+            assert adapter_mod._import_roce() is roce
+        with env(GLM_ROCE_RING="1"):
+            assert adapter_mod._import_roce() is ring
+    finally:
+        restore_modules(saved)
+
+
 # -- 2. four gloo ranks: vote + routing ---------------------------------------------------
 
 
