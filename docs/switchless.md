@@ -146,7 +146,7 @@ per rank, plus the ring NCCL lines. On the fabric, an RDMA write to the opposite
 `--flow_label=16383` should cross the neighbour's tc rule in hardware (its `in_hw` counter rises, the
 neighbour's `IpForwDatagrams` stays flat).
 
-Effect (measured on this fleet, 2026-10-01, `glm53-roce:v12-ring-20261001`, default GPU clocks; the switched
+Effect (measured on a four-Spark ring, 2026-10-01, `glm53-roce:v12-ring-20261001`, default GPU clocks; the switched
 column is the README's published numbers):
 
 | | ring + RoCEnante | switched (README) | ring, NCCL only |
