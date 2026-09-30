@@ -136,6 +136,9 @@ SWITCHLESS_ROCE_PEER_HCA_MAPS="1=0/2,2=0/3,3=1/3;0=1/3,2=0/2,3=0/3;0=1/2,1=1/3,3
 #SWITCHLESS_ROCE_GATHER_MAX_SIZE=262144
 ```
 
+A complete configuration file (all site fields, ring enabled) is
+[`.env.switchless-ring.example`](../.env.switchless-ring.example).
+
 The launcher sets `GLM_ROCE_ALLREDUCE=1`, `GLM_ROCE_RING=1`, `B12X_ROCE_HCA`, the maps, both caps and
 `B12X_ROCE_TWO_WAVE_THRESHOLD_BYTES=0` itself; conflicting `EXTRA_ENV` entries are refused. Fail-stop is kept:
 with the default `GLM_ROCE_REQUIRE=1` a runtime that cannot start (missing map, broken mesh) makes every rank
