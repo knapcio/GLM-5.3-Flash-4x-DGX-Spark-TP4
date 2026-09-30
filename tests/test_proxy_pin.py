@@ -25,6 +25,33 @@ class Pin(unittest.TestCase):
         self.assertEqual(pp.parse_cpus("5-9,15"), {5, 6, 7, 8, 9, 15})
         self.assertEqual(pp.new_tids({1, 2}, {1, 2, 77}), {77})
 
+    def test_ring_target(self):
+        self.assertEqual(pp.target_module({}), "b12x.comm.roce._proxy")
+        self.assertEqual(pp.target_module({"GLM_ROCE_RING": "0"}), "b12x.comm.roce._proxy")
+        self.assertEqual(pp.target_module({"GLM_ROCE_RING": "1"}), "b12x.comm.roce_ring._proxy")
+        self.assertEqual(pp.target_module({"GLM_ROCE_RING": " 1 "}), "b12x.comm.roce_ring._proxy")
+
+    def test_ring_module_pinned_when_selected(self):
+        os.environ.pop(pp.ENV, None)
+        os.environ[pp.ENV] = "auto"
+        os.environ[pp.ENV_RING] = "1"
+        target = "b12x.comm.roce_ring._proxy"
+        mod = types.ModuleType(target)
+
+        class Proxy:
+            def start(self):
+                return None
+
+        mod.Proxy = Proxy
+        sys.modules[target] = mod
+        try:
+            pp.register()
+            self.assertTrue(getattr(Proxy, "_glm_pin", False))
+        finally:
+            sys.modules.pop(target, None)
+            os.environ.pop(pp.ENV, None)
+            os.environ.pop(pp.ENV_RING, None)
+
     def test_big_cores_from_sysfs(self):
         with tempfile.TemporaryDirectory() as d:
             for c, cap in ((0, 512), (1, 512), (2, 1024), (3, 1024)):

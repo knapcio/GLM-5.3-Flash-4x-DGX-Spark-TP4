@@ -32,7 +32,15 @@ import sys
 ENV = "GLM_ROCE_PROXY_CPUS"
 ENV_ISO = "GLM_ROCE_PROXY_ISOLATE"
 ENV_BIG = "GLM_ROCE_PROXY_BIG"
-TARGET = "b12x.comm.roce._proxy"
+ENV_RING = "GLM_ROCE_RING"
+TARGETS = {"roce": "b12x.comm.roce._proxy", "roce_ring": "b12x.comm.roce_ring._proxy"}
+TARGET = TARGETS["roce"]  # default target; ring mode is selected by target_module()
+
+
+def target_module(environ=None) -> str:
+    """The b12x proxy module to pin: the ring variant under ``GLM_ROCE_RING=1``."""
+    env = os.environ if environ is None else environ
+    return TARGETS["roce_ring"] if env.get(ENV_RING, "0").strip() == "1" else TARGETS["roce"]
 
 
 def parse_cpus(spec: str) -> set[int]:
@@ -177,13 +185,14 @@ def register() -> None:
 
     if os.environ.get(ENV, "").strip().lower() in ("", "0", "off", "no", "false"):
         return
-    if TARGET in sys.modules:
-        _install(sys.modules[TARGET])
+    target = target_module()
+    if target in sys.modules:
+        _install(sys.modules[target])
         return
 
     class _Finder(importlib.abc.MetaPathFinder):
         def find_spec(self, name, path, target=None):
-            if name != TARGET:
+            if name != target:
                 return None
             sys.meta_path.remove(self)
             spec = importlib.util.find_spec(name)
