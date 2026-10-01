@@ -148,6 +148,9 @@ def main():
     check(fb.loop_tail("intro " + "abc def ghi, " * 30), "loop_tail: catches a repeated unit")
     check(fb.scan_text("x", "的是在了不和有")[0] == ["SALAD"] and fb.scan_text("x", "Zażółć gęślą jaźń")[0] == [],
           "scan_text: CJK flagged, Polish diacritics not")
+    check(fb.base_port("http://127.0.0.1:8888") == 8888 and fb.base_port("http://h:8093") == 8093
+          and fb.base_port("http://h") == 8093 and fb.base_port("http://[::1]:8888") == 8888,
+          "base_port: endpoint port, defaulting to 8093")
     r = run(["prefill", "p1", "--sizes", "32768,131072", "--reps", "2", "--dash",
              f"http://127.0.0.1:{port}/prefill-bench"], env)
     check(r.returncode == 0 and "PREFILL 32768 tps 3033" in r.stdout and "PREFILL 131072" in r.stdout,

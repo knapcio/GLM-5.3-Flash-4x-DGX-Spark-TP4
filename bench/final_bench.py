@@ -39,8 +39,19 @@ import sys
 import time
 import urllib.request
 import zlib
+from urllib.parse import urlsplit
 
 BASE = os.environ.get("GLM_BASE", "http://127.0.0.1:8093")
+
+
+def base_port(base=None):
+    """Port of the serving endpoint in ``base`` (default 8093, the fleet's standard port).
+
+    rigmark_meta's ``meta`` subcommand looks the serving container up by its ``--port``,
+    so a deployment on another port (e.g. 8888 for the sparkDash federation) needs this
+    carried over from ``GLM_BASE`` instead of the 8093 default.
+    """
+    return urlsplit(BASE if base is None else base).port or 8093
 MODEL = os.environ.get("GLM_MODEL", "GLM-5.3-Flash-FP8")
 OUTROOT = os.path.expanduser("~/glm-final")
 
@@ -359,7 +370,8 @@ def rigmark(a):
     pre, meta = os.path.join(out, "preflight.json"), os.path.join(out, "metadata.json")
     with open(pre, "w") as f:
         subprocess.run([sys.executable, meta_py, "preflight", "--base", BASE, "--wait", "180"], stdout=f, check=True)
-    subprocess.run([sys.executable, meta_py, "meta", "--base", BASE, "--preflight", pre, "--out", meta], check=True)
+    subprocess.run([sys.executable, meta_py, "meta", "--base", BASE, "--port", str(base_port()),
+                    "--preflight", pre, "--out", meta], check=True)
     model = json.load(open(pre))["model"]
     body = json.dumps({"chat_template_kwargs": {"reasoning_effort": a.effort}})
     per = {}
